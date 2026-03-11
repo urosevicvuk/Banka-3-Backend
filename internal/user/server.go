@@ -71,7 +71,7 @@ func (s *Server) Login(ctx context.Context, req *userpb.LoginRequest) (*userpb.L
 			return nil, err
 		}
 
-		refreshToken, err := generateAccessToken(user.email, s.refreshJwtSecret)
+		refreshToken, err := generateRefreshToken(user.email, s.refreshJwtSecret)
 		if err != nil {
 			return nil, err
 		}
