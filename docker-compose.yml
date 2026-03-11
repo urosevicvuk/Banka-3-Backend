@@ -16,17 +16,33 @@ services:
       retries: 10
 
   user:
+    container_name: user
     build:
       context: .
       dockerfile: cmd/user/Dockerfile
     ports:
-      - "${USER_GRPC_PORT:-50051}:50051"
+      - "50051:50051"
     environment:
       DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
       GRPC_PORT: "50051"
     depends_on:
       postgres:
         condition: service_healthy
+
+  notification:
+    container_name: notification
+    build:
+      context: .
+      dockerfile: cmd/notification/Dockerfile
+    ports:
+      - "50052:50051"
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+      GRPC_PORT: "50051"
+    depends_on: #potentially add message broker in future
+      postgres:
+        condition: service_healthy
+
 
 volumes:
   pgdata:
