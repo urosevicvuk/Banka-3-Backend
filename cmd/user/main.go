@@ -1,16 +1,13 @@
 package main
 
 import (
-	"database/sql"
 	"banka-raf/gen/user"
 	internalUser "banka-raf/internal/user"
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
 	"os"
-
-	"banka-raf/gen/user"
-	internalUser "banka-raf/internal/user"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
