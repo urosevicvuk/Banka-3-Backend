@@ -14,6 +14,7 @@ message ConfirmationMailRequest{
 
 message ActivationMailRequest{
   string to_addr = 1; //comma separated addresses of receivers
+  string link =2; //link to page
 }
 
 message SuccessResponse{

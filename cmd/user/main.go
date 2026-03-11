@@ -43,10 +43,19 @@ func main() {
 
 	resp, err := client.SendActivationEmail(context.Background(), &notification.ActivationMailRequest{
 		ToAddr: "pajicaleksa.12@gmail.com",
+		Link:   "servis.raf.edu.rs",
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	resp2, err := client.SendConfirmationEmail(context.Background(), &notification.ConfirmationMailRequest{
+		ToAddr: "pajicaleksa.12@gmail.com",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("resp2: %v", resp2)
 	log.Printf("resp: %s", resp)
 
 	if err := srv.Serve(lis); err != nil {

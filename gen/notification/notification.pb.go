@@ -84,6 +84,7 @@ func (x *ConfirmationMailRequest) GetBody() string {
 type ActivationMailRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ToAddr        string                 `protobuf:"bytes,1,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"` //comma separated addresses of receivers
+	Link          string                 `protobuf:"bytes,2,opt,name=link,proto3" json:"link,omitempty"`                   //link to page
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -121,6 +122,13 @@ func (*ActivationMailRequest) Descriptor() ([]byte, []int) {
 func (x *ActivationMailRequest) GetToAddr() string {
 	if x != nil {
 		return x.ToAddr
+	}
+	return ""
+}
+
+func (x *ActivationMailRequest) GetLink() string {
+	if x != nil {
+		return x.Link
 	}
 	return ""
 }
@@ -177,9 +185,10 @@ const file_notification_notification_proto_rawDesc = "" +
 	"\x17ConfirmationMailRequest\x12\x17\n" +
 	"\ato_addr\x18\x01 \x01(\tR\x06toAddr\x12\x18\n" +
 	"\asubject\x18\x02 \x01(\tR\asubject\x12\x12\n" +
-	"\x04body\x18\x03 \x01(\tR\x04body\"0\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\"D\n" +
 	"\x15ActivationMailRequest\x12\x17\n" +
-	"\ato_addr\x18\x01 \x01(\tR\x06toAddr\"1\n" +
+	"\ato_addr\x18\x01 \x01(\tR\x06toAddr\x12\x12\n" +
+	"\x04link\x18\x02 \x01(\tR\x04link\"1\n" +
 	"\x0fSuccessResponse\x12\x1e\n" +
 	"\n" +
 	"successful\x18\x01 \x01(\bR\n" +

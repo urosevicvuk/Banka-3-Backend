@@ -4,7 +4,6 @@ import (
 	"banka-raf/gen/notification"
 	"bytes"
 	"context"
-	"fmt"
 	"html/template"
 	"log"
 
@@ -52,9 +51,6 @@ func (s *Server) SendConfirmationEmail(ctx context.Context, req *notification.Co
 }
 
 func (s *Server) SendActivationEmail(ctx context.Context, req *notification.ActivationMailRequest) (*notification.SuccessResponse, error) {
-	log.Println("Sending activation email")
-	wd, _ := os.Getwd()
-	fmt.Println("Working directory:", wd)
 	//list of email we want to send to
 	to := strings.Split(req.ToAddr, ",")
 	templ, err := template.ParseFiles("templates/activation.html")
@@ -70,7 +66,7 @@ func (s *Server) SendActivationEmail(ctx context.Context, req *notification.Acti
 		return &notification.SuccessResponse{Successful: false}, nil
 	}
 
-	err = sendHTMLEmail(to, "Activate Banka 3 account", rendered.String())
+	err = sendHTMLEmail(to, "Aktivirajte Banka 3 nalog", rendered.String())
 	if err != nil {
 		log.Println("Couldn't send email:", err)
 		return &notification.SuccessResponse{Successful: false}, nil
