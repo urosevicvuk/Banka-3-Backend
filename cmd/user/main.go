@@ -12,8 +12,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"gorm.io/gorm"
 	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func connect_to_db_gorm() *gorm.DB {
@@ -47,7 +47,7 @@ func main() {
 
 	db := connectToDB()
 	gorm_db := connect_to_db_gorm()
-	gorm_db.AutoMigrate(&internalUser.Clients{}, &internalUser.Employees{});
+	//gorm_db.AutoMigrate(&internalUser.Clients{}, &internalUser.Employees{});
 	log.Println("connected to database...")
 	defer db.Close()
 
