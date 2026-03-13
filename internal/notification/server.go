@@ -87,7 +87,6 @@ func (s *Server) SendActivationEmail(ctx context.Context, req *notification.Acti
 	}
 
 	err = s.sender.Send(to, "Aktivirajte Banka 3 nalog", rendered.String()) //umesto smtp
-	//	err = sendHTMLEmail(to, "Aktivirajte Banka 3 nalog", rendered.String())
 	if err != nil {
 		log.Println("Couldn't send email:", err)
 		return &notification.SuccessResponse{Successful: false}, nil
@@ -112,7 +111,7 @@ func (s *Server) SendPasswordResetEmail(ctx context.Context, req *notification.P
 		return &notification.SuccessResponse{Successful: false}, nil
 	}
 
-	err = sendHTMLEmail(to, "Reset your Banka 3 password", rendered.String())
+	err = s.sender.Send(to, "Reset your Banka 3 password", rendered.String())
 	if err != nil {
 		log.Println("Couldn't send password reset email:", err)
 		return &notification.SuccessResponse{Successful: false}, nil
@@ -137,7 +136,7 @@ func (s *Server) SendInitialPasswordSetEmail(ctx context.Context, req *notificat
 		return &notification.SuccessResponse{Successful: false}, nil
 	}
 
-	err = sendHTMLEmail(to, "Set your Banka 3 password", rendered.String())
+	err = s.sender.Send(to, "Set your Banka 3 password", rendered.String())
 	if err != nil {
 		log.Println("Couldn't send initial password set email:", err)
 		return &notification.SuccessResponse{Successful: false}, nil
@@ -148,28 +147,3 @@ func (s *Server) SendInitialPasswordSetEmail(ctx context.Context, req *notificat
 	}, nil
 }
 
-func sendHTMLEmail(to []string, subject string, htmlBody string) error {
-	auth := smtp.PlainAuth(
-		"",
-		os.Getenv("FROM_EMAIL"),
-		os.Getenv("FROM_EMAIL_PASSWORD"),
-		os.Getenv("FROM_EMAIL_SMTP"),
-	)
-	headers := []string{
-		"From: " + os.Getenv("FROM_EMAIL"),
-		"To: " + strings.Join(to, ","),
-		"Subject: " + subject,
-		"MIME-Version: 1.0",
-		"Content-Type: text/html; charset=\"UTF-8\"",
-	}
-
-	message := strings.Join(headers, "\r\n") + "\r\n\r\n" + htmlBody
-
-	return smtp.SendMail(
-		os.Getenv("SMTP_ADDR"),
-		auth,
-		os.Getenv("FROM_EMAIL"),
-		to,
-		[]byte(message),
-	)
-}
