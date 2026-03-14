@@ -92,3 +92,19 @@ CREATE TABLE IF NOT EXISTS account (
     daily_expenditure   BIGINT,
     monthly_expenditure BIGINT,
 );
+
+CREATE TABLE IF NOT EXISTS activity_code (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(7) NOT NULL,
+    sector VARCHAR(127) NOT NULL,
+    branch VARCHAR(255) NOT NULL,
+)
+
+CREATE TABLE IF NOT EXISTS company (
+    registered_id   BIGINT PRIMARY KEY,
+    name VARCHAR(127) NOT NULL,
+    tax_code        BIGINT NOT NULL,
+    activity_code_id BIGINT REFERENCES activity_code(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    address         VARCHAR(255) NOT NULL,
+    owner_id        BIGINT NOT NULL REFERENCES clients(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+);
