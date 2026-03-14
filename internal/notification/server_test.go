@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	notificationpb "banka-raf/gen/notification"
+	notificationpb "github.com/RAF-SI-2025/Banka-3-Backend/gen/notification"
 )
 
 func setSMTPTestEnv(t *testing.T) {
