@@ -42,7 +42,8 @@ func SetupApi(router *gin.Engine, server *Server) {
 
 	{
 		api.POST("/login", server.Login)
-		api.POST("/refresh", server.Refresh)
+		api.POST("/logout", AuthenticatedMiddleware(server.UserClient), server.Logout)
+		api.POST("/token/refresh", server.Refresh)
 	}
 
 	password_reset := api.Group("/password-reset")
@@ -60,6 +61,24 @@ func SetupApi(router *gin.Engine, server *Server) {
 
 func (s *Server) Healthz(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func (s *Server) Logout(c *gin.Context) {
+	email := c.GetString("email")
+	println(email)
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	_, err := s.UserClient.Logout(ctx, &userpb.LogoutRequest{
+		Email: email,
+	})
+
+	if err != nil {
+		writeGRPCError(c, err)
+		return
+	}
+
+	c.Status(http.StatusAccepted)
 }
 
 func (s *Server) Login(c *gin.Context) {
@@ -158,7 +177,9 @@ func (s *Server) RequestPasswordReset(c *gin.Context) {
 	}
 
 	// frontend should not be aware if the email got sent
-	c.Status(http.StatusAccepted)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "If that email exists, a reset link was sent.",
+	})
 }
 
 func (s *Server) ConfirmPasswordReset(c *gin.Context) {
@@ -202,7 +223,9 @@ func writeGRPCError(c *gin.Context, err error) {
 	case codes.NotFound:
 		c.String(http.StatusNotFound, st.Message())
 	case codes.Unauthenticated:
-		c.String(http.StatusUnauthorized, st.Message())
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": st.Message(),
+		})
 	case codes.PermissionDenied:
 		c.String(http.StatusForbidden, st.Message())
 	default:
