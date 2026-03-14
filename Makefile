@@ -1,4 +1,4 @@
-include .env
+-include .env
 export
 
 GO_IMAGE := golang:1.25
