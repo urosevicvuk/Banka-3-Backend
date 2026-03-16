@@ -3,14 +3,12 @@ package user
 import (
 	"context"
 	"database/sql"
-	"net"
 	"net/url"
 	"regexp"
 	"sync"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -39,39 +37,8 @@ func (s *testNotificationServer) SendInitialPasswordSetEmail(_ context.Context, 
 	return &notificationpb.SuccessResponse{Successful: true}, nil
 }
 
-func startNotificationTestServer(t *testing.T, handler notificationpb.NotificationServiceServer) (string, func()) {
-	t.Helper()
-
-	lis, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("listen: %v", err)
-	}
-
-	srv := grpc.NewServer()
-	notificationpb.RegisterNotificationServiceServer(srv, handler)
-	go func() {
-		_ = srv.Serve(lis)
-	}()
-
-	return lis.Addr().String(), func() {
-		srv.Stop()
-		_ = lis.Close()
-	}
-}
-
-func newTestServer(t *testing.T) (*Server, sqlmock.Sqlmock, *sql.DB) {
-	t.Helper()
-
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-
-	return NewServer("access", "refresh", db, nil), mock, db
-}
-
 func TestRequestPasswordResetUnknownEmailReturnsAccepted(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	server, mock, db := NewTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	email := "missing@banka.raf"
@@ -98,7 +65,7 @@ func TestRequestPasswordResetUnknownEmailReturnsAccepted(t *testing.T) {
 }
 
 func TestRequestPasswordResetExistingEmailSendsNotification(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	server, mock, db := NewTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	notificationServer := &testNotificationServer{}
@@ -160,7 +127,7 @@ func TestRequestPasswordResetExistingEmailSendsNotification(t *testing.T) {
 }
 
 func TestRequestInitialPasswordSetExistingEmailSendsNotification(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	server, mock, db := NewTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	notificationServer := &testNotificationServer{}
@@ -218,7 +185,7 @@ func TestRequestInitialPasswordSetExistingEmailSendsNotification(t *testing.T) {
 }
 
 func TestSetPasswordWithTokenInvalidInput(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	server, mock, db := NewTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	_, err := server.SetPasswordWithToken(context.Background(), &userpb.SetPasswordWithTokenRequest{
@@ -238,7 +205,7 @@ func TestSetPasswordWithTokenInvalidInput(t *testing.T) {
 }
 
 func TestSetPasswordWithTokenSuccess(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	server, mock, db := NewTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	email := "admin@banka.raf"
@@ -277,7 +244,7 @@ func TestSetPasswordWithTokenSuccess(t *testing.T) {
 }
 
 func TestSetPasswordWithTokenInvalidOrExpiredToken(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	server, mock, db := NewTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	mock.ExpectBegin()
