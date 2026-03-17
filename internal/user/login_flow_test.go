@@ -93,10 +93,21 @@ func TestLoginCorrectCreds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("got error in Login")
 	}
-	if len(resp.AccessToken) == 0 || len(resp.RefreshToken) == 0 {
+
+	accessToken := resp.AccessToken
+	refreshToken := resp.RefreshToken
+	if len(accessToken) == 0 || len(refreshToken) == 0 {
 		t.Fatalf("expected to get tokens")
 	}
 
+	_, err = server.ValidateAccessToken(context.Background(), &userpb.ValidateTokenRequest{Token: accessToken})
+	if err != nil {
+		t.Fatalf("couldn't validate access token")
+	}
+	_, err = server.ValidateRefreshToken(context.Background(), &userpb.ValidateTokenRequest{Token: refreshToken})
+	if err != nil {
+		t.Fatalf("couldn't validate refresh token")
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
