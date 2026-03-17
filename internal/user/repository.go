@@ -10,9 +10,10 @@ import (
 
 	"log"
 
-	"github.com/golang-jwt/jwt/v5"
 	"strconv"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type User struct {
@@ -212,6 +213,21 @@ func (s *Server) GetUserByID(id int64) (*Employee_by_Id_response, error) {
 		&user.Username, &user.Position, &user.Department, &user.Active,
 		&user.Permission_id, &user.Permission_name,
 	)
+	// 	rows, err := s.db_gorm.Table("employees").Select("employees.id, employees.first_name, employees.last_name, employees.email, employees.position, employees.phone_number, employees.active, employees.date_of_birth, employees.gender, employees.address, employees.username, employees.department").Joins("join employee_permissions on employees.id = employee_permissions.employee_id").Rows()
+	// if rows != nil{
+	// 	for rows.Next(){
+	// 	some_emp := Employee_by_Id_response_temp{}
+	// 	rows.Scan(&some_emp.Id, &some_emp.First_name, &some_emp.Last_name)
+	// 	log.Println("Value of Grom query: ", some_emp)
+	// }
+
+	// }
+	res := Employee_by_Id_response_temp{}
+	s.db_gorm.Raw("select e.id, e.first_name, p.name from employees e join employee_permissions ep on e.id = ep.employee_id join permissions p on ep.permission_id = p.id;").Scan(&res)
+	log.Println("Here's the fucking res", res)
+	if err != nil{
+		log.Println(err)
+	}
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no employee found with id: %d", id)

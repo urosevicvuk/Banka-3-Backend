@@ -130,6 +130,14 @@ type (
 		Permission_id   int64     `gorm:"column:Permission_id;type:bigint;not null;primaryKey"`
 		Permission_name string    `gorm:"column:Permission_name;type:varchar(100);not null"`
 	}
+
+	Employee_by_Id_response_temp struct {
+		Id int
+		First_name string
+		Name string `gorm:"column:name;type:varchar(100);not null"`
+		
+	}
+	
 	Get_employees struct {
 		Id              int    `gorm:"column:id;type:bigint;not null;primaryKey"`
 		First_name      string `gorm:"column:first_name;type:varchar(100);not null"`
