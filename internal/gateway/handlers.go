@@ -186,7 +186,7 @@ func (s *Server) CreateEmployeeAccount(c *gin.Context) {
 	c.JSON(http.StatusUnprocessableEntity, gin.H{
 		"valid": false,
 	})
-	``}
+}
 
 func (s *Server) GetEmployeeByID(c *gin.Context) {
 	var uri getEmployeeByIDURI
