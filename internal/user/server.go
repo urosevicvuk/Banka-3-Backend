@@ -133,28 +133,39 @@ func (s *Server) GetEmployees(ctx context.Context, req *userpb.GetEmployeesReque
 }
 
 func (s *Server) UpdateEmployee(ctx context.Context, req *userpb.UpdateEmployeeRequest) (*userpb.UpdateEmployeeResponse, error) {
+	println("here")
+
 	var permissions []Permission
 	for _, perm := range req.Permissions {
 		// yes these are invalid. i don't care
 		permissions = append(permissions, Permission{Id: 0, Name: perm})
 	}
+	println("here1")
 
 	emp := Employee{
-		Last_name:     req.LastName,
-		Gender:        req.Gender,
-		Phone_number:  req.PhoneNumber,
-		Address:       req.Address,
-		Position:      req.Position,
-		Department:    req.Department,
-		Active:        req.Active,
-		Id:            uint64(req.Id),
-		Date_of_birth: time.Time{},
-		Updated_at:    time.Now(),
-		Permissions:   permissions,
+		First_name:   req.FirstName,
+		Last_name:    req.LastName,
+		Gender:       req.Gender,
+		Phone_number: req.PhoneNumber,
+		Address:      req.Address,
+		Position:     req.Position,
+		Department:   req.Department,
+		Active:       req.Active,
+		Id:           uint64(req.Id),
+		Updated_at:   time.Now(),
+		Permissions:  permissions,
 	}
+
+	println("here2")
 
 	err := s.UpdateEmployee_(&emp)
 	if err != nil {
+		if errors.Is(err, ErrEmployeeNotFound) {
+			return nil, status.Error(codes.NotFound, "Employee not found")
+		}
+		if errors.Is(err, ErrUnknownPermission) {
+			return nil, status.Error(codes.NotFound, "Uknown permissions")
+		}
 		return nil, status.Error(codes.Internal, "Messed something up in UpdateEmployee_ in repo")
 	}
 	return &userpb.UpdateEmployeeResponse{Valid: true, Response: "You made it"}, nil

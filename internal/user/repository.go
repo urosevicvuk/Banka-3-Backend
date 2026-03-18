@@ -32,6 +32,10 @@ var ErrCompanyRegisteredIDExists = errors.New("company with registered id alread
 var ErrCompanyOwnerNotFound = errors.New("company owner not found")
 var ErrCompanyActivityCodeNotFound = errors.New("company activity code not found")
 
+var ErrEmployeeNotFound = errors.New("employee not found")
+
+var ErrUnknownPermission = errors.New("unknown permissions")
+
 func (s *Server) GetUserByEmail(email string) (*User, error) {
 	query := `
 		SELECT email, password, salt_password FROM employees WHERE email = $1
@@ -643,6 +647,7 @@ func (s *Server) GetAllEmployees(email string, name string, last_name string, po
 func (s *Server) UpdateEmployee_(emp *Employee) error {
 
 	updates := map[string]any{
+		"first_name":   emp.First_name,
 		"last_name":    emp.Last_name,
 		"gender":       emp.Gender,
 		"phone_number": emp.Phone_number,
@@ -658,7 +663,7 @@ func (s *Server) UpdateEmployee_(emp *Employee) error {
 		Where("id = ?", emp.Id).
 		Updates(updates).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ErrEmployeeNotFound
 	}
 
 	var perms []Permission
@@ -672,14 +677,14 @@ func (s *Server) UpdateEmployee_(emp *Employee) error {
 		Where("name IN ?", names).
 		Find(&perms).Error; err != nil {
 		tx.Rollback()
-		return err
+		return ErrUnknownPermission
 	}
 
 	if err := tx.Model(emp).
 		Association("Permissions").
 		Replace(&perms); err != nil {
 		tx.Rollback()
-		return err
+		return ErrEmployeeNotFound
 	}
 
 	return tx.Commit().Error

@@ -2200,14 +2200,15 @@ func (x *GetEmployeeResponse) GetPermissions() []string {
 type UpdateEmployeeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	LastName      string                 `protobuf:"bytes,2,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
-	Gender        string                 `protobuf:"bytes,3,opt,name=gender,proto3" json:"gender,omitempty"`
-	PhoneNumber   string                 `protobuf:"bytes,4,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	Address       string                 `protobuf:"bytes,5,opt,name=address,proto3" json:"address,omitempty"`
-	Position      string                 `protobuf:"bytes,6,opt,name=position,proto3" json:"position,omitempty"`
-	Department    string                 `protobuf:"bytes,7,opt,name=department,proto3" json:"department,omitempty"`
-	Active        bool                   `protobuf:"varint,8,opt,name=active,proto3" json:"active,omitempty"`
-	Permissions   []string               `protobuf:"bytes,9,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	FirstName     string                 `protobuf:"bytes,2,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
+	LastName      string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	Gender        string                 `protobuf:"bytes,4,opt,name=gender,proto3" json:"gender,omitempty"`
+	PhoneNumber   string                 `protobuf:"bytes,5,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
+	Address       string                 `protobuf:"bytes,6,opt,name=address,proto3" json:"address,omitempty"`
+	Position      string                 `protobuf:"bytes,7,opt,name=position,proto3" json:"position,omitempty"`
+	Department    string                 `protobuf:"bytes,8,opt,name=department,proto3" json:"department,omitempty"`
+	Active        bool                   `protobuf:"varint,9,opt,name=active,proto3" json:"active,omitempty"`
+	Permissions   []string               `protobuf:"bytes,10,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2247,6 +2248,13 @@ func (x *UpdateEmployeeRequest) GetId() int64 {
 		return x.Id
 	}
 	return 0
+}
+
+func (x *UpdateEmployeeRequest) GetFirstName() string {
+	if x != nil {
+		return x.FirstName
+	}
+	return ""
 }
 
 func (x *UpdateEmployeeRequest) GetLastName() string {
@@ -2624,19 +2632,22 @@ const file_user_user_proto_rawDesc = "" +
 	"department\x18\v \x01(\tR\n" +
 	"department\x12\x16\n" +
 	"\x06active\x18\f \x01(\bR\x06active\x12 \n" +
-	"\vpermissions\x18\r \x03(\tR\vpermissions\"\x8f\x02\n" +
+	"\vpermissions\x18\r \x03(\tR\vpermissions\"\xae\x02\n" +
 	"\x15UpdateEmployeeRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
-	"\tlast_name\x18\x02 \x01(\tR\blastName\x12\x16\n" +
-	"\x06gender\x18\x03 \x01(\tR\x06gender\x12!\n" +
-	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12\x18\n" +
-	"\aaddress\x18\x05 \x01(\tR\aaddress\x12\x1a\n" +
-	"\bposition\x18\x06 \x01(\tR\bposition\x12\x1e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
 	"\n" +
-	"department\x18\a \x01(\tR\n" +
+	"first_name\x18\x02 \x01(\tR\tfirstName\x12\x1b\n" +
+	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x16\n" +
+	"\x06gender\x18\x04 \x01(\tR\x06gender\x12!\n" +
+	"\fphone_number\x18\x05 \x01(\tR\vphoneNumber\x12\x18\n" +
+	"\aaddress\x18\x06 \x01(\tR\aaddress\x12\x1a\n" +
+	"\bposition\x18\a \x01(\tR\bposition\x12\x1e\n" +
+	"\n" +
+	"department\x18\b \x01(\tR\n" +
 	"department\x12\x16\n" +
-	"\x06active\x18\b \x01(\bR\x06active\x12 \n" +
-	"\vpermissions\x18\t \x03(\tR\vpermissions\"J\n" +
+	"\x06active\x18\t \x01(\bR\x06active\x12 \n" +
+	"\vpermissions\x18\n" +
+	" \x03(\tR\vpermissions\"J\n" +
 	"\x16UpdateEmployeeResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\x12\x1a\n" +
 	"\bresponse\x18\x02 \x01(\tR\bresponse2\xdb\v\n" +

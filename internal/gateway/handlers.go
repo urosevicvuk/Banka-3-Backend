@@ -453,22 +453,24 @@ func (s *Server) UpdateEmployee(c *gin.Context) {
 	}
 
 	var req updateEmployeeRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.BindJSON(&req); err != nil {
 		writeBindError(c, err)
 		return
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
+	println("please")
 	resp, err := s.UserClient.UpdateEmployee(ctx, &userpb.UpdateEmployeeRequest{
 		Id:          uri.EmployeeID,
-		LastName:    *req.LastName,
-		Gender:      *req.Gender,
-		PhoneNumber: *req.PhoneNumber,
-		Address:     *req.Address,
-		Position:    *req.Position,
-		Department:  *req.Department,
-		Active:      *req.Active,
-		Permissions: *req.Permissions,
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		Gender:      req.Gender,
+		PhoneNumber: req.PhoneNumber,
+		Address:     req.Address,
+		Position:    req.Position,
+		Department:  req.Department,
+		Active:      req.Active,
+		Permissions: req.Permissions,
 	})
 	if err != nil {
 		writeGRPCError(c, err)

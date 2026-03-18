@@ -260,14 +260,15 @@ message GetEmployeeResponse {
 
 message UpdateEmployeeRequest {
   int64 id = 1;
-  string last_name = 2;
-  string gender = 3;
-  string phone_number = 4;
-  string address = 5;
-  string position = 6;
-  string department = 7;
-  bool active = 8;
-  repeated string permissions = 9;
+  string first_name = 2;
+  string last_name = 3;
+  string gender = 4;
+  string phone_number = 5;
+  string address = 6;
+  string position = 7;
+  string department = 8;
+  bool active = 9;
+  repeated string permissions = 10;
 }
 
 message UpdateEmployeeResponse {
