@@ -69,44 +69,42 @@ func NewServer(accessJwtSecret string, refreshJwtSecret string, database *sql.DB
 	}
 }
 
-func (s *Server) GetEmployeeByEmail(ctx context.Context, req *userpb.GetEmployeeByEmailRequest) (*userpb.GetEmployeeByEmailResponse, error) {
+func (emp Employee) toProtobuf() *userpb.GetEmployeeResponse {
+	permissions := make([]string, len(emp.Permissions))
+	for i, v := range emp.Permissions {
+		permissions[i] = v.Name
+	}
+	return &userpb.GetEmployeeResponse{
+		Id:          int64(emp.Id),
+		FirstName:   emp.First_name,
+		LastName:    emp.Last_name,
+		BirthDate:   emp.Date_of_birth.Format(time.DateOnly),
+		Gender:      emp.Gender,
+		Email:       emp.Email,
+		PhoneNumber: emp.Phone_number,
+		Address:     emp.Address,
+		Username:    emp.Username,
+		Position:    emp.Position,
+		Department:  emp.Department,
+		Active:      emp.Active,
+		Permissions: permissions,
+	}
+}
+
+func (s *Server) GetEmployeeByEmail(ctx context.Context, req *userpb.GetEmployeeByEmailRequest) (*userpb.GetEmployeeResponse, error) {
 	resp, err := s.getEmployeeByEmail(req.Email)
 	if err != nil {
 		return nil, err
 	}
-	println(resp)
-	return nil, nil
+	return resp.toProtobuf(), nil
 }
 
-func (s *Server) GetEmployeeById(ctx context.Context, req *userpb.GetEmployeeByIdRequest) (*userpb.GetEmployeeByIdResponse, error) {
-	map_to_protobuff_resp := func(emp Employee_by_Id_response) *userpb.GetEmployeeByIdResponse {
-		return &userpb.GetEmployeeByIdResponse{
-			Id:          int64(emp.Id),
-			FirstName:   emp.First_name,
-			LastName:    emp.Last_name,
-			DateOfBirth: emp.Date_of_birth.Unix(),
-			Gender:      emp.Gender,
-			Email:       emp.Email,
-			PhoneNumber: emp.Phone_number,
-			Address:     emp.Address,
-			Username:    emp.Username,
-			Position:    emp.Position,
-			Department:  emp.Department,
-			Active:      emp.Active,
-			Perms:       &userpb.Permissions{Id: int64(emp.Permission_id), Permision: emp.Permission_name},
-		}
-	}
-
-	// user, err := get_user_by_id_from_model(Employee_by_Id_response{}, int(req.Id), s)
-	user, err := s.GetUserByID(req.Id)
+func (s *Server) GetEmployeeById(ctx context.Context, req *userpb.GetEmployeeByIdRequest) (*userpb.GetEmployeeResponse, error) {
+	resp, err := s.getEmployeeById(req.Id)
 	if err != nil {
-		log.Printf("Error in employee retrieval%s", err.Error())
-		return nil, status.Error(codes.Internal, "Employee creation failed")
+		return nil, err
 	}
-
-	resp := map_to_protobuff_resp(*user)
-	log.Println("I managed to return without fail, with response", resp)
-	return resp, nil
+	return resp.toProtobuf(), nil
 }
 
 func (s *Server) GetEmployees(ctx context.Context, req *userpb.GetEmployeesRequest) (*userpb.GetEmployeesResponse, error) {
@@ -119,7 +117,6 @@ func (s *Server) GetEmployees(ctx context.Context, req *userpb.GetEmployeesReque
 			Position:    emp.Position,
 			PhoneNumber: emp.Phone_number,
 			Active:      emp.Active,
-			Perms:       &userpb.Permissions{Id: emp.Permission_id, Permision: emp.Permission_name},
 		}
 	}
 	employees, err := s.GetAllEmployees(req.Email, req.FirstName, req.LastName, req.Position)
@@ -136,17 +133,29 @@ func (s *Server) GetEmployees(ctx context.Context, req *userpb.GetEmployeesReque
 }
 
 func (s *Server) UpdateEmployee(ctx context.Context, req *userpb.UpdateEmployeeRequest) (*userpb.UpdateEmployeeResponse, error) {
-	emp := Employees{Last_name: req.LastName, Gender: req.Gender,
-		Phone_number: req.PhoneNumber, Address: req.Address, Position: req.Position,
-		Department: req.Department, Active: req.Active, Id: uint64(req.Id)}
-	var map_from_pbs = func(perms *userpb.Permissions) Permissions {
-		return Permissions{Id: uint64(perms.Id), Name: perms.Permision}
+	// var map_from_pbs = func(perms *userpb.Permission) Permission {
+	// 	return Permission{Id: uint64(perms.Id), Name: perms.Permision}
+	// }
+	// var permissions []Permission
+	// for _, perm := range req.Perms {
+	// 	permissions = append(permissions, map_from_pbs(perm))
+	// }
+
+	emp := Employee{
+		Last_name:     req.LastName,
+		Gender:        req.Gender,
+		Phone_number:  req.PhoneNumber,
+		Address:       req.Address,
+		Position:      req.Position,
+		Department:    req.Department,
+		Active:        req.Active,
+		Id:            uint64(req.Id),
+		Date_of_birth: time.Time{},
+		Updated_at:    time.Now(),
+		// Permissions:   permissions,
 	}
-	var permissions []Permissions
-	for _, perm := range req.Perms {
-		permissions = append(permissions, map_from_pbs(perm))
-	}
-	err := s.UpdateEmployee_(&emp, permissions)
+
+	err := s.UpdateEmployee_(&emp)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Messed something up in UpdateEmployee_ in repo")
 	}
@@ -524,8 +533,8 @@ func (s *Server) CreateClientAccount(ctx context.Context, req *userpb.CreateClie
 		return nil, status.Error(codes.Internal, "Password salting failed")
 	}
 
-	client := Clients{First_name: req.FirstName,
-		Last_name: req.LastName, Date_of_birth: time.Unix(req.DateOfBirth, 0),
+	client := Client{First_name: req.FirstName,
+		Last_name: req.LastName, Date_of_birth: time.Unix(req.BirthDate, 0),
 		Gender: req.Gender, Email: req.Email, Phone_number: req.PhoneNumber,
 		Address: req.Address, Password: HashPassword(req.Password, salt),
 		Salt_password: salt}
@@ -559,8 +568,8 @@ func (s *Server) CreateEmployeeAccount(ctx context.Context, req *userpb.CreateEm
 		log.Printf("Error generating salt %s", salt_err.Error())
 	}
 
-	employee := Employees{First_name: req.FirstName,
-		Last_name: req.LastName, Date_of_birth: time.Unix(req.DateOfBirth, 0),
+	employee := Employee{First_name: req.FirstName,
+		Last_name: req.LastName, Date_of_birth: time.Unix(req.BirthDate, 0),
 		Gender: req.Gender, Email: req.Email, Phone_number: req.PhoneNumber,
 		Address: req.Address, Username: req.Username, Position: req.Position,
 		Department: req.Department, Salt_password: salt,

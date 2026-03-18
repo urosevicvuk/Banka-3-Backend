@@ -35,6 +35,7 @@ func SetupApi(router *gin.Engine, server *Server) {
 	{
 		employees.POST("", server.CreateEmployeeAccount)
 		employees.GET("/:id", server.GetEmployeeByID)
+		employees.GET("", server.GetAllEmployees)
 	}
 }
 
@@ -122,7 +123,7 @@ func (s *Server) CreateClientAccount(c *gin.Context) {
 	resp, err := s.UserClient.CreateClientAccount(ctx, &userpb.CreateClientRequest{
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
-		DateOfBirth: req.DateOfBirth,
+		BirthDate:   req.DateOfBirth,
 		Gender:      req.Gender,
 		Email:       req.Email,
 		PhoneNumber: req.PhoneNumber,
@@ -159,7 +160,7 @@ func (s *Server) CreateEmployeeAccount(c *gin.Context) {
 	resp, err := s.UserClient.CreateEmployeeAccount(ctx, &userpb.CreateEmployeeRequest{
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
-		DateOfBirth: req.DateOfBirth,
+		BirthDate:   req.BirthDate,
 		Gender:      req.Gender,
 		Email:       req.Email,
 		PhoneNumber: req.PhoneNumber,
@@ -204,14 +205,36 @@ func (s *Server) GetEmployeeByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id":         resp.Id,
-		"first_name": resp.FirstName,
-		"last_name":  resp.LastName,
-		"email":      resp.Email,
-		"position":   resp.Position,
-		"active":     resp.Active,
+	c.JSON(http.StatusOK, resp)
+}
+
+func (s *Server) GetAllEmployees(c *gin.Context) {
+	var uri getEmployeesURI
+	if err := c.Bind(&uri); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	println("EMAIL!!!:  " + uri.Email)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	resp, err := s.UserClient.GetEmployees(ctx, &userpb.GetEmployeesRequest{
+		FirstName: uri.FirstName,
+		LastName:  uri.LastName,
+		Email:     uri.Email,
+		Position:  uri.Position,
 	})
+	if err != nil {
+		writeGRPCError(c, err)
+		return
+	}
+	if resp.Employees != nil {
+		c.JSON(http.StatusOK, resp.Employees)
+	} else {
+		dummy := make([]string, 0)
+		c.JSON(http.StatusOK, dummy)
+	}
+
 }
 
 func (s *Server) RequestPasswordReset(c *gin.Context) {
