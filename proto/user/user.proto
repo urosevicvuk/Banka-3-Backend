@@ -25,6 +25,9 @@ service UserService {
   rpc GetClients(GetClientsRequest) returns (GetClientsResponse);
   rpc UpdateClient(UpdateClientRequest) returns (UpdateClientResponse);
   rpc CreateEmployeeAccount(CreateEmployeeRequest) returns (CreateEmployeeResponse);
+  rpc GetLoans(GetLoansRequest) returns (GetLoansResponse); // move to bank.proto later
+  rpc GetLoanByNumber(GetLoanByNumberRequest) returns (Loan); // move to bank.proto later
+  rpc CreateLoanRequest(CreateLoanRequestRequest) returns (CreateLoanRequestResponse); // move to bank.proto later
 }
 
 message ValidateTokenRequest {
@@ -274,3 +277,48 @@ message UpdateEmployeeResponse {
   bool valid = 1;
   string response = 2;
 }
+
+// move to bank.proto later
+message Loan {
+  string loan_number = 1;
+  string loan_type = 2;
+  string account_number = 3;
+  double loan_amount = 4;
+  int32 repayment_period = 5;
+  double nominal_rate = 6;
+  double effective_rate = 7;
+  string agreement_date = 8;
+  string maturity_date = 9;
+  double next_installment_amount = 10;
+  string next_installment_date = 11;
+  double remaining_debt = 12;
+  string currency = 13;
+  string status = 14;
+}
+
+message GetLoansRequest {
+  string client_email = 1;
+  string loan_type = 2;
+  string account_number = 3;
+  string status = 4;
+}
+
+message GetLoansResponse {
+  repeated Loan loans = 1;
+}
+
+message GetLoanByNumberRequest {
+  string client_email = 1;
+  string loan_number = 2;
+}
+
+message CreateLoanRequestRequest {
+  string client_email = 1;
+  string account_number = 2;
+  string loan_type = 3;
+  double amount = 4;
+  int32 repayment_period = 5;
+  string currency = 6;
+}
+
+message CreateLoanRequestResponse {} // intentionally empty

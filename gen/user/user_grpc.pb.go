@@ -39,6 +39,9 @@ const (
 	UserService_GetClients_FullMethodName                = "/user.UserService/GetClients"
 	UserService_UpdateClient_FullMethodName              = "/user.UserService/UpdateClient"
 	UserService_CreateEmployeeAccount_FullMethodName     = "/user.UserService/CreateEmployeeAccount"
+	UserService_GetLoans_FullMethodName                  = "/user.UserService/GetLoans"
+	UserService_GetLoanByNumber_FullMethodName           = "/user.UserService/GetLoanByNumber"
+	UserService_CreateLoanRequest_FullMethodName         = "/user.UserService/CreateLoanRequest"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -65,6 +68,9 @@ type UserServiceClient interface {
 	GetClients(ctx context.Context, in *GetClientsRequest, opts ...grpc.CallOption) (*GetClientsResponse, error)
 	UpdateClient(ctx context.Context, in *UpdateClientRequest, opts ...grpc.CallOption) (*UpdateClientResponse, error)
 	CreateEmployeeAccount(ctx context.Context, in *CreateEmployeeRequest, opts ...grpc.CallOption) (*CreateEmployeeResponse, error)
+	GetLoans(ctx context.Context, in *GetLoansRequest, opts ...grpc.CallOption) (*GetLoansResponse, error)
+	GetLoanByNumber(ctx context.Context, in *GetLoanByNumberRequest, opts ...grpc.CallOption) (*Loan, error)
+	CreateLoanRequest(ctx context.Context, in *CreateLoanRequestRequest, opts ...grpc.CallOption) (*CreateLoanRequestResponse, error)
 }
 
 type userServiceClient struct {
@@ -275,6 +281,36 @@ func (c *userServiceClient) CreateEmployeeAccount(ctx context.Context, in *Creat
 	return out, nil
 }
 
+func (c *userServiceClient) GetLoans(ctx context.Context, in *GetLoansRequest, opts ...grpc.CallOption) (*GetLoansResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLoansResponse)
+	err := c.cc.Invoke(ctx, UserService_GetLoans_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetLoanByNumber(ctx context.Context, in *GetLoanByNumberRequest, opts ...grpc.CallOption) (*Loan, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Loan)
+	err := c.cc.Invoke(ctx, UserService_GetLoanByNumber_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) CreateLoanRequest(ctx context.Context, in *CreateLoanRequestRequest, opts ...grpc.CallOption) (*CreateLoanRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateLoanRequestResponse)
+	err := c.cc.Invoke(ctx, UserService_CreateLoanRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -299,6 +335,9 @@ type UserServiceServer interface {
 	GetClients(context.Context, *GetClientsRequest) (*GetClientsResponse, error)
 	UpdateClient(context.Context, *UpdateClientRequest) (*UpdateClientResponse, error)
 	CreateEmployeeAccount(context.Context, *CreateEmployeeRequest) (*CreateEmployeeResponse, error)
+	GetLoans(context.Context, *GetLoansRequest) (*GetLoansResponse, error)
+	GetLoanByNumber(context.Context, *GetLoanByNumberRequest) (*Loan, error)
+	CreateLoanRequest(context.Context, *CreateLoanRequestRequest) (*CreateLoanRequestResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -368,6 +407,15 @@ func (UnimplementedUserServiceServer) UpdateClient(context.Context, *UpdateClien
 }
 func (UnimplementedUserServiceServer) CreateEmployeeAccount(context.Context, *CreateEmployeeRequest) (*CreateEmployeeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateEmployeeAccount not implemented")
+}
+func (UnimplementedUserServiceServer) GetLoans(context.Context, *GetLoansRequest) (*GetLoansResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLoans not implemented")
+}
+func (UnimplementedUserServiceServer) GetLoanByNumber(context.Context, *GetLoanByNumberRequest) (*Loan, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLoanByNumber not implemented")
+}
+func (UnimplementedUserServiceServer) CreateLoanRequest(context.Context, *CreateLoanRequestRequest) (*CreateLoanRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateLoanRequest not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -750,6 +798,60 @@ func _UserService_CreateEmployeeAccount_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetLoans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLoansRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetLoans(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetLoans_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetLoans(ctx, req.(*GetLoansRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetLoanByNumber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLoanByNumberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetLoanByNumber(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetLoanByNumber_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetLoanByNumber(ctx, req.(*GetLoanByNumberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_CreateLoanRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateLoanRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).CreateLoanRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_CreateLoanRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).CreateLoanRequest(ctx, req.(*CreateLoanRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -836,6 +938,18 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateEmployeeAccount",
 			Handler:    _UserService_CreateEmployeeAccount_Handler,
+		},
+		{
+			MethodName: "GetLoans",
+			Handler:    _UserService_GetLoans_Handler,
+		},
+		{
+			MethodName: "GetLoanByNumber",
+			Handler:    _UserService_GetLoanByNumber_Handler,
+		},
+		{
+			MethodName: "CreateLoanRequest",
+			Handler:    _UserService_CreateLoanRequest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
