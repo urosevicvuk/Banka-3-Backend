@@ -48,6 +48,12 @@ func SetupApi(router *gin.Engine, server *Server) {
 		companies.GET("/:id", server.GetCompanyByID)
 		companies.PUT("/:id", server.UpdateCompany)
 	}
+
+	transactions := api.Group("/transactions")
+	{
+		transactions.POST("/payments", server.PayoutMoneyToOtherAccount)
+		transactions.POST("/transfers", server.TransferMoneyBetweenAccounts)
+	}
 }
 
 func (s *Server) Healthz(c *gin.Context) {
@@ -523,4 +529,20 @@ func (s *Server) ConfirmPasswordReset(c *gin.Context) {
 	} else {
 		c.Status(http.StatusUnprocessableEntity)
 	}
+}
+func (s *Server) PayoutMoneyToOtherAccount(c *gin.Context) {
+	var req paymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeBindError(c, err)
+		return
+	}
+	c.Status(http.StatusNotImplemented)
+}
+func (s *Server) TransferMoneyBetweenAccounts(c *gin.Context) {
+	var req transferRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeBindError(c, err)
+		return
+	}
+	c.Status(http.StatusNotImplemented)
 }

@@ -7,7 +7,11 @@
 package bank
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,10 +19,19 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	BankService_TransferMoneyBetweenAccounts_FullMethodName = "/bank.BankService/TransferMoneyBetweenAccounts"
+	BankService_PayoutMoneyToOtherAccount_FullMethodName    = "/bank.BankService/PayoutMoneyToOtherAccount"
+	BankService_GetTransactions_FullMethodName              = "/bank.BankService/GetTransactions"
+)
+
 // BankServiceClient is the client API for BankService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BankServiceClient interface {
+	TransferMoneyBetweenAccounts(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error)
+	PayoutMoneyToOtherAccount(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
+	GetTransactions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTransactionsResponse, error)
 }
 
 type bankServiceClient struct {
@@ -29,10 +42,43 @@ func NewBankServiceClient(cc grpc.ClientConnInterface) BankServiceClient {
 	return &bankServiceClient{cc}
 }
 
+func (c *bankServiceClient) TransferMoneyBetweenAccounts(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransferResponse)
+	err := c.cc.Invoke(ctx, BankService_TransferMoneyBetweenAccounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bankServiceClient) PayoutMoneyToOtherAccount(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PaymentResponse)
+	err := c.cc.Invoke(ctx, BankService_PayoutMoneyToOtherAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bankServiceClient) GetTransactions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetTransactionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTransactionsResponse)
+	err := c.cc.Invoke(ctx, BankService_GetTransactions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BankServiceServer is the server API for BankService service.
 // All implementations must embed UnimplementedBankServiceServer
 // for forward compatibility.
 type BankServiceServer interface {
+	TransferMoneyBetweenAccounts(context.Context, *TransferRequest) (*TransferResponse, error)
+	PayoutMoneyToOtherAccount(context.Context, *PaymentRequest) (*PaymentResponse, error)
+	GetTransactions(context.Context, *emptypb.Empty) (*GetTransactionsResponse, error)
 	mustEmbedUnimplementedBankServiceServer()
 }
 
@@ -43,6 +89,15 @@ type BankServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedBankServiceServer struct{}
 
+func (UnimplementedBankServiceServer) TransferMoneyBetweenAccounts(context.Context, *TransferRequest) (*TransferResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method TransferMoneyBetweenAccounts not implemented")
+}
+func (UnimplementedBankServiceServer) PayoutMoneyToOtherAccount(context.Context, *PaymentRequest) (*PaymentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PayoutMoneyToOtherAccount not implemented")
+}
+func (UnimplementedBankServiceServer) GetTransactions(context.Context, *emptypb.Empty) (*GetTransactionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTransactions not implemented")
+}
 func (UnimplementedBankServiceServer) mustEmbedUnimplementedBankServiceServer() {}
 func (UnimplementedBankServiceServer) testEmbeddedByValue()                     {}
 
@@ -64,13 +119,80 @@ func RegisterBankServiceServer(s grpc.ServiceRegistrar, srv BankServiceServer) {
 	s.RegisterService(&BankService_ServiceDesc, srv)
 }
 
+func _BankService_TransferMoneyBetweenAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BankServiceServer).TransferMoneyBetweenAccounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BankService_TransferMoneyBetweenAccounts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BankServiceServer).TransferMoneyBetweenAccounts(ctx, req.(*TransferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BankService_PayoutMoneyToOtherAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PaymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BankServiceServer).PayoutMoneyToOtherAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BankService_PayoutMoneyToOtherAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BankServiceServer).PayoutMoneyToOtherAccount(ctx, req.(*PaymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BankService_GetTransactions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BankServiceServer).GetTransactions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BankService_GetTransactions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BankServiceServer).GetTransactions(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BankService_ServiceDesc is the grpc.ServiceDesc for BankService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BankService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "bank.BankService",
 	HandlerType: (*BankServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "bank/bank.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "TransferMoneyBetweenAccounts",
+			Handler:    _BankService_TransferMoneyBetweenAccounts_Handler,
+		},
+		{
+			MethodName: "PayoutMoneyToOtherAccount",
+			Handler:    _BankService_PayoutMoneyToOtherAccount_Handler,
+		},
+		{
+			MethodName: "GetTransactions",
+			Handler:    _BankService_GetTransactions_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "bank/bank.proto",
 }
