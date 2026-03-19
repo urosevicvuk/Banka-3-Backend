@@ -30,7 +30,7 @@ const (
 
 	// account_type enum
 	Checking account_type = "checking"
-	Foreign  owner_type   = "foreign"
+	Foreign  account_type = "foreign"
 
 	// card_type enum
 	Debit  card_type = "debit"

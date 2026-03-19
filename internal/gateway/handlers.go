@@ -49,6 +49,11 @@ func SetupApi(router *gin.Engine, server *Server) {
 		companies.GET("/:id", server.GetCompanyByID)
 		companies.PUT("/:id", server.UpdateCompany)
 	}
+
+	accounts := api.Group("/accounts")
+	{
+		accounts.POST("", server.CreateAccount)
+	}
 }
 
 func (s *Server) Healthz(c *gin.Context) {
@@ -369,6 +374,40 @@ func (s *Server) UpdateCompany(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, companyResponse(resp.Company))
+}
+
+func (s *Server) CreateAccount(c *gin.Context) {
+	var req createAccountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeBindError(c, err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	resp, err := s.UserClient.CreateAccount(ctx, &userpb.CreateAccountRequest{
+		Name:             req.Name,
+		Owner:            req.Owner,
+		Currency:         req.Currency,
+		OwnerType:        req.OwnerType,
+		AccountType:      req.AccountType,
+		MaintainanceCost: req.MaintainanceCost,
+		DailyLimit:       req.DailyLimit,
+		MonthlyLimit:     req.MonthlyLimit,
+		CreatedBy:        req.CreatedBy,
+		ValidUntil:       req.ValidUntil,
+	})
+	if err != nil {
+		writeGRPCError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"valid":          resp.Valid,
+		"account_number": resp.AccountNumber,
+		"error":          resp.Error,
+	})
 }
 
 func (s *Server) GetEmployeeByID(c *gin.Context) {

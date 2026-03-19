@@ -97,6 +97,19 @@ type createCompanyRequest struct {
 	OwnerID        int64  `json:"owner_id" binding:"required"`
 }
 
+type createAccountRequest struct {
+	Name             string `json:"name" binding:"required"`
+	Owner            int64  `json:"owner" binding:"required"`
+	Currency         string `json:"currency" binding:"required"`
+	OwnerType        string `json:"owner_type" binding:"required"`
+	AccountType      string `json:"account_type" binding:"required"`
+	MaintainanceCost int64  `json:"maintainance_cost" binding:"required"`
+	DailyLimit       int64  `json:"daily_limit"`
+	MonthlyLimit     int64  `json:"monthly_limit"`
+	CreatedBy        int64  `json:"created_by" binding:"required"`
+	ValidUntil       int64  `json:"valid_until"`
+}
+
 type updateCompanyRequest struct {
 	Name           string `json:"name" binding:"required"`
 	ActivityCodeID int64  `json:"activity_code_id"`
