@@ -49,13 +49,13 @@ func SetupApi(router *gin.Engine, server *Server) {
 		companies.PUT("/:id", server.UpdateCompany)
 	}
 
-	loans := api.Group("/loans")
+	loans := api.Group("/loans", AuthenticatedMiddleware(server.UserClient))
 	{
 		loans.GET("", server.GetLoans)
 		loans.GET("/:loanNumber", server.GetLoanByNumber)
 	}
 
-	api.POST("/loan-requests", server.CreateLoanRequest)
+	api.POST("/loan-requests", AuthenticatedMiddleware(server.UserClient), server.CreateLoanRequest)
 }
 
 func (s *Server) Healthz(c *gin.Context) {
@@ -544,6 +544,7 @@ func (s *Server) GetLoans(c *gin.Context) {
 	defer cancel()
 
 	resp, err := s.UserClient.GetLoans(ctx, &userpb.GetLoansRequest{
+		ClientEmail:   c.GetString("email"),
 		LoanType:      query.LoanType,
 		AccountNumber: query.AccountNumber,
 		Status:        query.Status,
@@ -587,7 +588,8 @@ func (s *Server) GetLoanByNumber(c *gin.Context) {
 	defer cancel()
 
 	resp, err := s.UserClient.GetLoanByNumber(ctx, &userpb.GetLoanByNumberRequest{
-		LoanNumber: uri.LoanNumber,
+		ClientEmail: c.GetString("email"),
+		LoanNumber:  uri.LoanNumber,
 	})
 	if err != nil {
 		writeGRPCError(c, err)
@@ -623,6 +625,7 @@ func (s *Server) CreateLoanRequest(c *gin.Context) {
 	defer cancel()
 
 	_, err := s.UserClient.CreateLoanRequest(ctx, &userpb.CreateLoanRequestRequest{
+		ClientEmail:     c.GetString("email"),
 		AccountNumber:   req.AccountNumber,
 		LoanType:        req.LoanType,
 		Amount:          req.Amount,
