@@ -107,6 +107,17 @@ func (s *Server) GetEmployeeById(ctx context.Context, req *userpb.GetEmployeeByI
 	return resp.toProtobuf(), nil
 }
 
+func (s *Server) DeleteEmployee(ctx context.Context, req *userpb.DeleteEmployeeRequest) (*userpb.DeleteEmployeeResponse, error) {
+	err := s.deleteEmployee(req.Id)
+	if err != nil {
+		if errors.Is(err, ErrEmployeeNotFound) {
+			return nil, status.Error(codes.NotFound, "employee not found")
+		}
+		return nil, err
+	}
+	return &userpb.DeleteEmployeeResponse{Success: true}, nil
+}
+
 func (s *Server) GetEmployees(ctx context.Context, req *userpb.GetEmployeesRequest) (*userpb.GetEmployeesResponse, error) {
 	map_func := func(emp Employee) *userpb.GetEmployeesResponse_Employee {
 		return &userpb.GetEmployeesResponse_Employee{

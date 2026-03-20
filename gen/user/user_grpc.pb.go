@@ -23,6 +23,7 @@ const (
 	UserService_GetEmployeeByEmail_FullMethodName        = "/user.UserService/GetEmployeeByEmail"
 	UserService_GetEmployees_FullMethodName              = "/user.UserService/GetEmployees"
 	UserService_UpdateEmployee_FullMethodName            = "/user.UserService/UpdateEmployee"
+	UserService_DeleteEmployee_FullMethodName            = "/user.UserService/DeleteEmployee"
 	UserService_CreateCompany_FullMethodName             = "/user.UserService/CreateCompany"
 	UserService_GetCompanyById_FullMethodName            = "/user.UserService/GetCompanyById"
 	UserService_GetCompanies_FullMethodName              = "/user.UserService/GetCompanies"
@@ -49,6 +50,7 @@ type UserServiceClient interface {
 	GetEmployeeByEmail(ctx context.Context, in *GetEmployeeByEmailRequest, opts ...grpc.CallOption) (*GetEmployeeResponse, error)
 	GetEmployees(ctx context.Context, in *GetEmployeesRequest, opts ...grpc.CallOption) (*GetEmployeesResponse, error)
 	UpdateEmployee(ctx context.Context, in *UpdateEmployeeRequest, opts ...grpc.CallOption) (*GetEmployeeResponse, error)
+	DeleteEmployee(ctx context.Context, in *DeleteEmployeeRequest, opts ...grpc.CallOption) (*DeleteEmployeeResponse, error)
 	CreateCompany(ctx context.Context, in *CreateCompanyRequest, opts ...grpc.CallOption) (*CreateCompanyResponse, error)
 	GetCompanyById(ctx context.Context, in *GetCompanyByIdRequest, opts ...grpc.CallOption) (*GetCompanyByIdResponse, error)
 	GetCompanies(ctx context.Context, in *GetCompaniesRequest, opts ...grpc.CallOption) (*GetCompaniesResponse, error)
@@ -109,6 +111,16 @@ func (c *userServiceClient) UpdateEmployee(ctx context.Context, in *UpdateEmploy
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetEmployeeResponse)
 	err := c.cc.Invoke(ctx, UserService_UpdateEmployee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) DeleteEmployee(ctx context.Context, in *DeleteEmployeeRequest, opts ...grpc.CallOption) (*DeleteEmployeeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteEmployeeResponse)
+	err := c.cc.Invoke(ctx, UserService_DeleteEmployee_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -283,6 +295,7 @@ type UserServiceServer interface {
 	GetEmployeeByEmail(context.Context, *GetEmployeeByEmailRequest) (*GetEmployeeResponse, error)
 	GetEmployees(context.Context, *GetEmployeesRequest) (*GetEmployeesResponse, error)
 	UpdateEmployee(context.Context, *UpdateEmployeeRequest) (*GetEmployeeResponse, error)
+	DeleteEmployee(context.Context, *DeleteEmployeeRequest) (*DeleteEmployeeResponse, error)
 	CreateCompany(context.Context, *CreateCompanyRequest) (*CreateCompanyResponse, error)
 	GetCompanyById(context.Context, *GetCompanyByIdRequest) (*GetCompanyByIdResponse, error)
 	GetCompanies(context.Context, *GetCompaniesRequest) (*GetCompaniesResponse, error)
@@ -320,6 +333,9 @@ func (UnimplementedUserServiceServer) GetEmployees(context.Context, *GetEmployee
 }
 func (UnimplementedUserServiceServer) UpdateEmployee(context.Context, *UpdateEmployeeRequest) (*GetEmployeeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateEmployee not implemented")
+}
+func (UnimplementedUserServiceServer) DeleteEmployee(context.Context, *DeleteEmployeeRequest) (*DeleteEmployeeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteEmployee not implemented")
 }
 func (UnimplementedUserServiceServer) CreateCompany(context.Context, *CreateCompanyRequest) (*CreateCompanyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateCompany not implemented")
@@ -458,6 +474,24 @@ func _UserService_UpdateEmployee_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).UpdateEmployee(ctx, req.(*UpdateEmployeeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_DeleteEmployee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteEmployeeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).DeleteEmployee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_DeleteEmployee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).DeleteEmployee(ctx, req.(*DeleteEmployeeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -772,6 +806,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateEmployee",
 			Handler:    _UserService_UpdateEmployee_Handler,
+		},
+		{
+			MethodName: "DeleteEmployee",
+			Handler:    _UserService_DeleteEmployee_Handler,
 		},
 		{
 			MethodName: "CreateCompany",

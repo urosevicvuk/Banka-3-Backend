@@ -9,6 +9,7 @@ service UserService {
   rpc GetEmployeeByEmail(GetEmployeeByEmailRequest) returns (GetEmployeeResponse);
   rpc GetEmployees(GetEmployeesRequest) returns (GetEmployeesResponse);
   rpc UpdateEmployee(UpdateEmployeeRequest) returns (GetEmployeeResponse);
+  rpc DeleteEmployee(DeleteEmployeeRequest) returns (DeleteEmployeeResponse);
   rpc CreateCompany(CreateCompanyRequest) returns (CreateCompanyResponse);
   rpc GetCompanyById(GetCompanyByIdRequest) returns (GetCompanyByIdResponse);
   rpc GetCompanies(GetCompaniesRequest) returns (GetCompaniesResponse);
@@ -25,6 +26,14 @@ service UserService {
   rpc GetClients(GetClientsRequest) returns (GetClientsResponse);
   rpc UpdateClient(UpdateClientRequest) returns (UpdateClientResponse);
   rpc CreateEmployeeAccount(CreateEmployeeRequest) returns (GetEmployeeResponse);
+}
+
+message DeleteEmployeeRequest {
+  int64 id = 1;
+}
+
+message DeleteEmployeeResponse {
+  bool success = 1;
 }
 
 message ValidateTokenRequest {
