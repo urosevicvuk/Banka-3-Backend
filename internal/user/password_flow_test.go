@@ -211,6 +211,7 @@ func TestSetPasswordWithTokenSuccess(t *testing.T) {
 	email := "admin@banka.raf"
 	token := "opaque-token"
 	newPassword := "Admin123!"
+	salt := []byte{3, 2, 1}
 
 	mock.ExpectBegin()
 	mock.ExpectQuery("SELECT email, action_type").
@@ -219,8 +220,16 @@ func TestSetPasswordWithTokenSuccess(t *testing.T) {
 	mock.ExpectExec("UPDATE password_action_tokens").
 		WithArgs(email, passwordActionReset).
 		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectQuery(regexp.QuoteMeta(`
+		SELECT email, password, salt_password FROM employees WHERE email = $1
+		UNION ALL
+		SELECT email, password, salt_password FROM clients WHERE email = $1
+		LIMIT 1
+	`)).
+		WithArgs(email).
+		WillReturnRows(sqlmock.NewRows([]string{"email", "password", "salt_password"}).AddRow(email, []byte{1, 2, 3}, salt))
 	mock.ExpectExec("UPDATE employees").
-		WithArgs(hashValue(newPassword), email).
+		WithArgs(HashPassword(newPassword, salt), email).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec("UPDATE refresh_tokens SET revoked = TRUE WHERE email = \\$1").
 		WithArgs(email).
