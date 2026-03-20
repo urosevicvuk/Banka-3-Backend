@@ -587,6 +587,8 @@ func (s *Server) GetAllEmployees(email *string, name *string, lastName *string, 
 		query = query.Where("position = ?", *position)
 	}
 
+	query = query.Where("active = true")
+
 	err := query.Find(&employees).Error
 	if err != nil {
 		return nil, err
