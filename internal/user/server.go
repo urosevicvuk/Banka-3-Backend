@@ -574,7 +574,14 @@ func (s *Server) SetPasswordWithToken(ctx context.Context, req *userpb.SetPasswo
 		return nil, status.Error(codes.Internal, "token validation failed")
 	}
 
-	if err := s.UpdatePasswordByEmail(tx, email, hashValue(newPassword)); err != nil {
+	user, err := s.GetUserByEmail(email)
+	if err != nil || user == nil {
+		return nil, status.Error(codes.Internal, "user lookup failed")
+	}
+
+	hashedPassword := HashPassword(newPassword, user.salt)
+
+	if err := s.UpdatePasswordByEmail(tx, email, hashedPassword); err != nil {
 		return nil, status.Error(codes.Internal, "password update failed")
 	}
 
