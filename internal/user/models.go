@@ -296,7 +296,7 @@ func (Client) TableName() string {
 }
 
 func (PaymentRecipient) TableName() string {
-	return "payment_recipiants"
+	return "payment_recipients"
 }
 
 func (Employee) TableName() string {

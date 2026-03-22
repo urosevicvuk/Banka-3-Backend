@@ -155,7 +155,7 @@ func (s *Server) GetPaymentRecipients(
 			id,
 			name,
 			account_number
-		FROM payment_recipiants
+		FROM payment_recipients
 		WHERE client_id = $1
 		ORDER BY id ASC
 	`, req.ClientId)
@@ -203,7 +203,7 @@ func (s *Server) CreatePaymentRecipient(
 
 	var recipientID int64
 	err = s.database.QueryRowContext(ctx, `
-		INSERT INTO payment_recipiants (
+		INSERT INTO payment_recipients (
 			client_id,
 			name,
 			account_number
@@ -248,7 +248,7 @@ func (s *Server) UpdatePaymentRecipient(
 	}
 
 	result, err := s.database.ExecContext(ctx, `
-		UPDATE payment_recipiants
+		UPDATE payment_recipients
 		SET name = $1,
 			account_number = $2,
 			updated_at = NOW()
@@ -298,7 +298,7 @@ func (s *Server) DeletePaymentRecipient(
 	}
 
 	result, err := s.database.ExecContext(ctx, `
-		DELETE FROM payment_recipiants
+		DELETE FROM payment_recipients
 		WHERE id = $1 AND client_id = $2
 	`, req.Id, req.ClientId)
 	if err != nil {

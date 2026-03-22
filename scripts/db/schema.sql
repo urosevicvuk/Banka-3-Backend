@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS clients (
     updated_at    TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS payment_recipiants (
+CREATE TABLE IF NOT EXISTS payment_recipients (
     id              BIGSERIAL    PRIMARY KEY,
     client_id       BIGINT       NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     name            VARCHAR(127) NOT NULL,
