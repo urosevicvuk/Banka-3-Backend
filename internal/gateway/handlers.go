@@ -41,6 +41,8 @@ func SetupApi(router *gin.Engine, server *Server) {
 		transactions.GET("", server.GetTransactions)
 		transactions.GET("/:id", server.GetTransactionByID)
 		transactions.GET("/:id/pdf", server.GenerateTransactionPDF)
+		transactions.POST("/payments", server.PayoutMoneyToOtherAccount)
+		transactions.POST("/transfers", server.TransferMoneyBetweenAccounts)
 	}
 
 	passwordReset := api.Group("/password-reset")
@@ -648,6 +650,22 @@ func (s *Server) ConfirmPasswordReset(c *gin.Context) {
 	} else {
 		c.Status(http.StatusUnprocessableEntity)
 	}
+}
+func (s *Server) PayoutMoneyToOtherAccount(c *gin.Context) {
+	var req paymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeBindError(c, err)
+		return
+	}
+	c.Status(http.StatusNotImplemented)
+}
+func (s *Server) TransferMoneyBetweenAccounts(c *gin.Context) {
+	var req transferRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeBindError(c, err)
+		return
+	}
+	c.Status(http.StatusNotImplemented)
 }
 
 func (s *Server) GetLoans(c *gin.Context) {
