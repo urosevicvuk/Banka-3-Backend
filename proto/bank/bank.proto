@@ -26,6 +26,11 @@ service BankService {
   rpc GenerateTransactionPdf(GenerateTransactionPdfRequest) returns (GenerateTransactionPdfResponse);
 
   rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+  
+  
+  
+  rpc UpdateAccountName(UpdateAccountNameRequest) returns (UpdateAccountNameResponse);
+  rpc UpdateAccountLimits(UpdateAccountLimitsRequest) returns (UpdateAccountLimitsResponse);
 
   rpc GetLoans(GetLoansRequest) returns (GetLoansResponse); // move to bank.proto later
   rpc GetLoanByNumber(GetLoanByNumberRequest) returns (Loan);
@@ -259,6 +264,21 @@ message CreateAccountResponse {
   string AccountNumber = 2;
   string Error = 3;
 }
+
+message UpdateAccountNameRequest {
+  string account_number = 1;
+  string name = 2;
+}
+
+message UpdateAccountNameResponse {}
+
+message UpdateAccountLimitsRequest {
+  string account_number = 1;
+  optional int64 daily_limit = 2;
+  optional int64 monthly_limit = 3;
+}
+
+message UpdateAccountLimitsResponse {}
 
 message Loan {
   string loan_number = 1;

@@ -652,13 +652,6 @@ func (s *Server) ConfirmPasswordReset(c *gin.Context) {
 	}
 }
 
-func valueOrCurrentFloat64(newVal *float64, current float64) float64 {
-	if newVal != nil {
-		return *newVal
-	}
-	return current
-}
-
 func (s *Server) GetAccounts(c *gin.Context) {
 	var query getAccountsQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
@@ -774,8 +767,8 @@ func (s *Server) UpdateAccountLimits(c *gin.Context) {
 
 	_, err := s.BankClient.UpdateAccountLimits(ctx, &bankpb.UpdateAccountLimitsRequest{
 		AccountNumber: uri.AccountNumber,
-		DailyLimit:    valueOrCurrentFloat64(req.DailyLimit, 0),
-		MonthlyLimit:  valueOrCurrentFloat64(req.MonthlyLimit, 0),
+		DailyLimit:    req.DailyLimit,
+		MonthlyLimit:  req.MonthlyLimit,
 	})
 	if err != nil {
 		writeGRPCError(c, err)

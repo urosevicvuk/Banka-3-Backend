@@ -149,8 +149,8 @@ type updateAccountNameRequest struct {
 }
 
 type updateAccountLimitsRequest struct {
-	DailyLimit   *float64 `json:"daily_limit"`
-	MonthlyLimit *float64 `json:"monthly_limit"`
+	DailyLimit   *int64 `json:"daily_limit"`
+	MonthlyLimit *int64 `json:"monthly_limit"`
 }
 
 type createPaymentRecipientRequest struct {
