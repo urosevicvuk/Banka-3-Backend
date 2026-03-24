@@ -32,6 +32,9 @@ func (s *TOTPServer) VerifyCode(_ context.Context, req *userpb.VerifyCodeRequest
 	}
 	secret, err := s.GetSecret(*userId)
 	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return nil, status.Error(codes.Unauthenticated, "user doesn't have TOTP set up")
+		}
 		return nil, err
 	}
 	valid, err := totp.ValidateCustom(req.Code, *secret, time.Now(), totp.ValidateOpts{

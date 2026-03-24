@@ -80,7 +80,11 @@ func TOTPMiddleware(totp userpb.TOTPServiceClient) gin.HandlerFunc {
 			Email: email,
 			Code:  header,
 		})
-		if err != nil || !resp.Valid {
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "user doesn't have TOTP setup"})
+			return
+		}
+		if !resp.Valid {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

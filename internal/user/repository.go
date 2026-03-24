@@ -521,12 +521,9 @@ func (s *TOTPServer) GetSecret(id uint64) (*string, error) {
 		FROM verification_codes
 		WHERE client_id = $1 AND enabled = TRUE
 	`, id)
-	if row == nil {
-		return nil, ErrUserNotFound
-	}
 	err := row.Scan(&secret)
 	if err != nil {
-		return nil, err
+		return nil, ErrUserNotFound
 	}
 	return &secret, nil
 }
