@@ -1137,6 +1137,32 @@ func parseLoanType(value string) (loan_type, error) {
 	}
 }
 
+func parseInterestRateType(value string) (interest_rate_type, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "fixed", "fiksna", "":
+		return Fixed, nil
+	case "variable", "varijabilna":
+		return Variable, nil
+	default:
+		return "", status.Error(codes.InvalidArgument, "invalid interest_rate_type")
+	}
+}
+
+func parseEmploymentStatus(value string) (employment_status, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "full_time":
+		return Full_time, nil
+	case "temporary":
+		return Temporary, nil
+	case "unemployed":
+		return Unemployed, nil
+	case "":
+		return "", nil
+	default:
+		return "", status.Error(codes.InvalidArgument, "invalid employment_status")
+	}
+}
+
 func (s *Server) GetLoans(ctx context.Context, req *bankpb.GetLoansRequest) (*bankpb.GetLoansResponse, error) {
 	clientEmail := strings.TrimSpace(req.ClientEmail)
 	if clientEmail == "" {
@@ -1292,9 +1318,14 @@ func (s *Server) CreateLoanRequest(ctx context.Context, req *bankpb.CreateLoanRe
 		return nil, status.Error(codes.Internal, "failed to retrieve currency")
 	}
 
-	interestRateType := Fixed
-	if strings.ToLower(strings.TrimSpace(req.InterestRateType)) == "variable" {
-		interestRateType = Variable
+	interestRateType, err := parseInterestRateType(req.InterestRateType)
+	if err != nil {
+		return nil, err
+	}
+
+	empStatus, err := parseEmploymentStatus(req.EmploymentStatus)
+	if err != nil {
+		return nil, err
 	}
 
 	loanRequest := &LoanRequest{
@@ -1307,7 +1338,7 @@ func (s *Server) CreateLoanRequest(ctx context.Context, req *bankpb.CreateLoanRe
 		Submission_date:    time.Now(),
 		Purpose:            strings.TrimSpace(req.Purpose),
 		Salary:             req.Salary,
-		Employment_status:  employment_status(strings.TrimSpace(req.EmploymentStatus)),
+		Employment_status:  empStatus,
 		Employment_period:  req.EmploymentPeriod,
 		Phone_number:       strings.TrimSpace(req.PhoneNumber),
 		Interest_rate_type: interestRateType,

@@ -9,6 +9,7 @@ import (
 
 	exchangepb "github.com/RAF-SI-2025/Banka-3-Backend/gen/exchange"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
@@ -746,6 +747,12 @@ func (s *Server) GetLoans(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusOK, loanListResponse(resp))
+		return
+	}
+
+	// If the user service returned something other than NotFound, it's a real error
+	if code := status.Code(err); code != codes.NotFound {
+		writeGRPCError(c, err)
 		return
 	}
 

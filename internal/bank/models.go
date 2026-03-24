@@ -307,7 +307,7 @@ func (LoanRequest) TableName() string {
 }
 
 func (VerificationCode) TableName() string {
-	return "loan_request"
+	return "verification_codes"
 }
 
 func (CardRequest) TableName() string {
