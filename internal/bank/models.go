@@ -70,7 +70,7 @@ const (
 	// installment_status enum
 	Installment_Paid installment_status = "paid" // Prevent conflict with loan_status Paid
 	Due              installment_status = "due"
-	Insallment_Late  installment_status = "late"
+	Installment_Late installment_status = "late"
 
 	// Eemployment_status
 	Full_time  employment_status = "full_time"
@@ -253,7 +253,7 @@ type (
 
 	ExchangeRate struct {
 		Currency_code string    `gorm:"column:currency_code;type:varchar(3);not null;primaryKey"`
-		Rate_to_rsd   float64  `gorm:"column:rate_to_rsd;type:decimal(20,10);not null"`
+		Rate_to_rsd   float64   `gorm:"column:rate_to_rsd;type:decimal(20,10);not null"`
 		Updated_at    time.Time `gorm:"column:updated_at;not null;autoUpdateTime"`
 		Valid_until   time.Time `gorm:"column:valid_until;not null"`
 	}

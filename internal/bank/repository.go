@@ -635,7 +635,7 @@ func (s *Server) getLoansForClient(clientEmail string, loanType string, accountN
 			loans.amount AS loan_amount,
 			loans.installments AS repayment_period,
 			loans.interest_rate AS nominal_rate,
-			0 AS effective_rate,
+			(POWER(1 + loans.interest_rate / 100.0 / 12.0, 12) - 1) * 100 AS effective_rate,
 			TO_CHAR(loans.date_signed, 'YYYY-MM-DD') AS agreement_date,
 			TO_CHAR(loans.date_end, 'YYYY-MM-DD') AS maturity_date,
 			loans.monthly_payment AS next_installment_amount,
@@ -658,7 +658,7 @@ func (s *Server) getLoansForClient(clientEmail string, loanType string, accountN
 	}
 
 	err := query.
-		Order("loans.id DESC").
+		Order("loans.amount DESC").
 		Scan(&loans).Error
 	if err != nil {
 		return nil, err
@@ -683,7 +683,7 @@ func (s *Server) getLoanByIDForClient(clientEmail string, loanID int64) (*loanVi
 			loans.amount AS loan_amount,
 			loans.installments AS repayment_period,
 			loans.interest_rate AS nominal_rate,
-			0 AS effective_rate,
+			(POWER(1 + loans.interest_rate / 100.0 / 12.0, 12) - 1) * 100 AS effective_rate,
 			TO_CHAR(loans.date_signed, 'YYYY-MM-DD') AS agreement_date,
 			TO_CHAR(loans.date_end, 'YYYY-MM-DD') AS maturity_date,
 			loans.monthly_payment AS next_installment_amount,
@@ -844,7 +844,7 @@ func (s *Server) getAllLoans(loanType, accountNumber, loanStatus string) ([]loan
 			loans.amount AS loan_amount,
 			loans.installments AS repayment_period,
 			loans.interest_rate AS nominal_rate,
-			0 AS effective_rate,
+			(POWER(1 + loans.interest_rate / 100.0 / 12.0, 12) - 1) * 100 AS effective_rate,
 			TO_CHAR(loans.date_signed, 'YYYY-MM-DD') AS agreement_date,
 			TO_CHAR(loans.date_end, 'YYYY-MM-DD') AS maturity_date,
 			loans.monthly_payment AS next_installment_amount,

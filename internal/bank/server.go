@@ -1163,6 +1163,40 @@ func parseEmploymentStatus(value string) (employment_status, error) {
 	}
 }
 
+func parseLoanStatus(value string) (loan_status, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "approved":
+		return Approved, nil
+	case "rejected":
+		return Rejected, nil
+	case "paid":
+		return Paid, nil
+	case "late":
+		return Late, nil
+	default:
+		return "", status.Error(codes.InvalidArgument, "invalid status")
+	}
+}
+
+func loanViewToProto(loan *loanView) *bankpb.Loan {
+	return &bankpb.Loan{
+		LoanNumber:            loan.LoanNumber,
+		LoanType:              loan.LoanType,
+		AccountNumber:         loan.AccountNumber,
+		LoanAmount:            loan.LoanAmount,
+		RepaymentPeriod:       loan.RepaymentPeriod,
+		NominalRate:           loan.NominalRate,
+		EffectiveRate:         loan.EffectiveRate,
+		AgreementDate:         loan.AgreementDate,
+		MaturityDate:          loan.MaturityDate,
+		NextInstallmentAmount: loan.NextInstallmentAmount,
+		NextInstallmentDate:   loan.NextInstallmentDate,
+		RemainingDebt:         loan.RemainingDebt,
+		Currency:              loan.Currency,
+		Status:                loan.Status,
+	}
+}
+
 func (s *Server) GetLoans(ctx context.Context, req *bankpb.GetLoansRequest) (*bankpb.GetLoansResponse, error) {
 	clientEmail := strings.TrimSpace(req.ClientEmail)
 	if clientEmail == "" {
@@ -1180,18 +1214,11 @@ func (s *Server) GetLoans(ctx context.Context, req *bankpb.GetLoansRequest) (*ba
 
 	loanStatus := ""
 	if strings.TrimSpace(req.Status) != "" {
-		switch strings.ToLower(strings.TrimSpace(req.Status)) {
-		case "approved":
-			loanStatus = string(Approved)
-		case "rejected":
-			loanStatus = string(Rejected)
-		case "paid":
-			loanStatus = string(Paid)
-		case "late":
-			loanStatus = string(Late)
-		default:
-			return nil, status.Error(codes.InvalidArgument, "invalid status")
+		parsed, err := parseLoanStatus(req.Status)
+		if err != nil {
+			return nil, err
 		}
+		loanStatus = string(parsed)
 	}
 
 	loans, err := s.getLoansForClient(
@@ -1205,23 +1232,8 @@ func (s *Server) GetLoans(ctx context.Context, req *bankpb.GetLoansRequest) (*ba
 	}
 
 	responseLoans := make([]*bankpb.Loan, 0, len(loans))
-	for _, loan := range loans {
-		responseLoans = append(responseLoans, &bankpb.Loan{
-			LoanNumber:            loan.LoanNumber,
-			LoanType:              loan.LoanType,
-			AccountNumber:         loan.AccountNumber,
-			LoanAmount:            loan.LoanAmount,
-			RepaymentPeriod:       loan.RepaymentPeriod,
-			NominalRate:           loan.NominalRate,
-			EffectiveRate:         loan.EffectiveRate,
-			AgreementDate:         loan.AgreementDate,
-			MaturityDate:          loan.MaturityDate,
-			NextInstallmentAmount: loan.NextInstallmentAmount,
-			NextInstallmentDate:   loan.NextInstallmentDate,
-			RemainingDebt:         loan.RemainingDebt,
-			Currency:              loan.Currency,
-			Status:                loan.Status,
-		})
+	for i := range loans {
+		responseLoans = append(responseLoans, loanViewToProto(&loans[i]))
 	}
 
 	return &bankpb.GetLoansResponse{
@@ -1253,22 +1265,7 @@ func (s *Server) GetLoanByNumber(ctx context.Context, req *bankpb.GetLoanByNumbe
 		return nil, status.Error(codes.Internal, "failed to retrieve loan")
 	}
 
-	return &bankpb.Loan{
-		LoanNumber:            loan.LoanNumber,
-		LoanType:              loan.LoanType,
-		AccountNumber:         loan.AccountNumber,
-		LoanAmount:            loan.LoanAmount,
-		RepaymentPeriod:       loan.RepaymentPeriod,
-		NominalRate:           loan.NominalRate,
-		EffectiveRate:         loan.EffectiveRate,
-		AgreementDate:         loan.AgreementDate,
-		MaturityDate:          loan.MaturityDate,
-		NextInstallmentAmount: loan.NextInstallmentAmount,
-		NextInstallmentDate:   loan.NextInstallmentDate,
-		RemainingDebt:         loan.RemainingDebt,
-		Currency:              loan.Currency,
-		Status:                loan.Status,
-	}, nil
+	return loanViewToProto(loan), nil
 }
 
 func (s *Server) CreateLoanRequest(ctx context.Context, req *bankpb.CreateLoanRequestRequest) (*bankpb.CreateLoanRequestResponse, error) {
@@ -1418,7 +1415,10 @@ func (s *Server) ApproveLoanRequest(_ context.Context, req *bankpb.ApproveLoanRe
 	}
 
 	// Calculate interest rate
-	rateToRSD, _ := s.getExchangeRateToRSD(currency.Label)
+	rateToRSD, err := s.getExchangeRateToRSD(currency.Label)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to retrieve exchange rate")
+	}
 	amountRSD := int64(float64(loanReq.Amount) * rateToRSD)
 	baseRate := BaseAnnualRate(amountRSD)
 	margin := MarginForLoanType(loanReq.Type)
@@ -1510,18 +1510,11 @@ func (s *Server) GetAllLoans(_ context.Context, req *bankpb.GetAllLoansRequest) 
 
 	loanStatus := ""
 	if strings.TrimSpace(req.Status) != "" {
-		switch strings.ToLower(strings.TrimSpace(req.Status)) {
-		case "approved":
-			loanStatus = string(Approved)
-		case "rejected":
-			loanStatus = string(Rejected)
-		case "paid":
-			loanStatus = string(Paid)
-		case "late":
-			loanStatus = string(Late)
-		default:
-			return nil, status.Error(codes.InvalidArgument, "invalid status")
+		parsed, err := parseLoanStatus(req.Status)
+		if err != nil {
+			return nil, err
 		}
+		loanStatus = string(parsed)
 	}
 
 	loans, err := s.getAllLoans(
@@ -1534,23 +1527,8 @@ func (s *Server) GetAllLoans(_ context.Context, req *bankpb.GetAllLoansRequest) 
 	}
 
 	responseLoans := make([]*bankpb.Loan, 0, len(loans))
-	for _, loan := range loans {
-		responseLoans = append(responseLoans, &bankpb.Loan{
-			LoanNumber:            loan.LoanNumber,
-			LoanType:              loan.LoanType,
-			AccountNumber:         loan.AccountNumber,
-			LoanAmount:            loan.LoanAmount,
-			RepaymentPeriod:       loan.RepaymentPeriod,
-			NominalRate:           loan.NominalRate,
-			EffectiveRate:         loan.EffectiveRate,
-			AgreementDate:         loan.AgreementDate,
-			MaturityDate:          loan.MaturityDate,
-			NextInstallmentAmount: loan.NextInstallmentAmount,
-			NextInstallmentDate:   loan.NextInstallmentDate,
-			RemainingDebt:         loan.RemainingDebt,
-			Currency:              loan.Currency,
-			Status:                loan.Status,
-		})
+	for i := range loans {
+		responseLoans = append(responseLoans, loanViewToProto(&loans[i]))
 	}
 
 	return &bankpb.GetLoansResponse{Loans: responseLoans}, nil

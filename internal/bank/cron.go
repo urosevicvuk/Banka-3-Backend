@@ -109,7 +109,7 @@ func (s *Server) RunDailyInstallmentCollection() {
 	// retry late ones - give them 3 days grace period before we bug them again
 	var lateInstallments []LoanInstallment
 	err = s.db_gorm.
-		Where("status = ? AND due_date <= ?", Insallment_Late, today.AddDate(0, 0, -3)).
+		Where("status = ? AND due_date <= ?", Installment_Late, today.AddDate(0, 0, -3)).
 		Find(&lateInstallments).Error
 	if err != nil {
 		log.Printf("[Cron] ERROR fetching late installments for retry: %v", err)
@@ -180,7 +180,7 @@ func (s *Server) processLoanPayment(loan *Loan, today time.Time, isRetry bool) {
 			Currency_id:        loan.Currency_id,
 			Due_date:           loan.Next_payment_due,
 			Paid_date:          time.Time{},
-			Status:             Insallment_Late,
+			Status:             Installment_Late,
 		}
 		if err := s.db_gorm.Create(&installment).Error; err != nil {
 			log.Printf("[Cron] ERROR creating late installment for loan %d: %v", loan.Id, err)
