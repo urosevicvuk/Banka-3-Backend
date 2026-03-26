@@ -1387,7 +1387,7 @@ func (s *Server) CreateLoanRequest(_ context.Context, req *bankpb.CreateLoanRequ
 		Type:               normalizedType,
 		Currency_id:        currency.Id,
 		Amount:             req.Amount,
-		Repayment_period:   int64(req.RepaymentPeriod),
+		Repayment_period:   req.RepaymentPeriod,
 		Account_id:         account.Id,
 		Status:             LoanRequestPending,
 		Submission_date:    time.Now(),

@@ -700,7 +700,7 @@ type loanView struct {
 	LoanType              string  `gorm:"column:loan_type"`
 	AccountNumber         string  `gorm:"column:account_number"`
 	LoanAmount            int64   `gorm:"column:loan_amount"`
-	RepaymentPeriod       int32   `gorm:"column:repayment_period"`
+	RepaymentPeriod       int64   `gorm:"column:repayment_period"`
 	NominalRate           float64 `gorm:"column:nominal_rate"`
 	EffectiveRate         float64 `gorm:"column:effective_rate"`
 	AgreementDate         string  `gorm:"column:agreement_date"`
@@ -1277,7 +1277,7 @@ type loanRequestView struct {
 	EmploymentStatus string `gorm:"column:employment_status"`
 	EmploymentPeriod int64  `gorm:"column:employment_period"`
 	PhoneNumber      string `gorm:"column:phone_number"`
-	RepaymentPeriod  int32  `gorm:"column:repayment_period"`
+	RepaymentPeriod  int64  `gorm:"column:repayment_period"`
 	AccountNumber    string `gorm:"column:account_number"`
 	Status           string `gorm:"column:status"`
 	InterestRateType string `gorm:"column:interest_rate_type"`

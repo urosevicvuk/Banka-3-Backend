@@ -3560,7 +3560,7 @@ type Loan struct {
 	LoanType              string                 `protobuf:"bytes,2,opt,name=loan_type,json=loanType,proto3" json:"loan_type,omitempty"`
 	AccountNumber         string                 `protobuf:"bytes,3,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"`
 	LoanAmount            int64                  `protobuf:"varint,4,opt,name=loan_amount,json=loanAmount,proto3" json:"loan_amount,omitempty"`
-	RepaymentPeriod       int32                  `protobuf:"varint,5,opt,name=repayment_period,json=repaymentPeriod,proto3" json:"repayment_period,omitempty"`
+	RepaymentPeriod       int64                  `protobuf:"varint,5,opt,name=repayment_period,json=repaymentPeriod,proto3" json:"repayment_period,omitempty"`
 	NominalRate           float64                `protobuf:"fixed64,6,opt,name=nominal_rate,json=nominalRate,proto3" json:"nominal_rate,omitempty"`
 	EffectiveRate         float64                `protobuf:"fixed64,7,opt,name=effective_rate,json=effectiveRate,proto3" json:"effective_rate,omitempty"`
 	AgreementDate         string                 `protobuf:"bytes,8,opt,name=agreement_date,json=agreementDate,proto3" json:"agreement_date,omitempty"`
@@ -3632,7 +3632,7 @@ func (x *Loan) GetLoanAmount() int64 {
 	return 0
 }
 
-func (x *Loan) GetRepaymentPeriod() int32 {
+func (x *Loan) GetRepaymentPeriod() int64 {
 	if x != nil {
 		return x.RepaymentPeriod
 	}
@@ -3872,7 +3872,7 @@ type CreateLoanRequestRequest struct {
 	AccountNumber    string                 `protobuf:"bytes,2,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"`
 	LoanType         string                 `protobuf:"bytes,3,opt,name=loan_type,json=loanType,proto3" json:"loan_type,omitempty"`
 	Amount           int64                  `protobuf:"varint,4,opt,name=amount,proto3" json:"amount,omitempty"`
-	RepaymentPeriod  int32                  `protobuf:"varint,5,opt,name=repayment_period,json=repaymentPeriod,proto3" json:"repayment_period,omitempty"`
+	RepaymentPeriod  int64                  `protobuf:"varint,5,opt,name=repayment_period,json=repaymentPeriod,proto3" json:"repayment_period,omitempty"`
 	Currency         string                 `protobuf:"bytes,6,opt,name=currency,proto3" json:"currency,omitempty"`
 	Purpose          string                 `protobuf:"bytes,7,opt,name=purpose,proto3" json:"purpose,omitempty"`
 	Salary           int64                  `protobuf:"varint,8,opt,name=salary,proto3" json:"salary,omitempty"`
@@ -3942,7 +3942,7 @@ func (x *CreateLoanRequestRequest) GetAmount() int64 {
 	return 0
 }
 
-func (x *CreateLoanRequestRequest) GetRepaymentPeriod() int32 {
+func (x *CreateLoanRequestRequest) GetRepaymentPeriod() int64 {
 	if x != nil {
 		return x.RepaymentPeriod
 	}
@@ -4045,7 +4045,7 @@ type LoanRequestView struct {
 	EmploymentStatus string                 `protobuf:"bytes,7,opt,name=employment_status,json=employmentStatus,proto3" json:"employment_status,omitempty"`
 	EmploymentPeriod int64                  `protobuf:"varint,8,opt,name=employment_period,json=employmentPeriod,proto3" json:"employment_period,omitempty"`
 	PhoneNumber      string                 `protobuf:"bytes,9,opt,name=phone_number,json=phoneNumber,proto3" json:"phone_number,omitempty"`
-	RepaymentPeriod  int32                  `protobuf:"varint,10,opt,name=repayment_period,json=repaymentPeriod,proto3" json:"repayment_period,omitempty"`
+	RepaymentPeriod  int64                  `protobuf:"varint,10,opt,name=repayment_period,json=repaymentPeriod,proto3" json:"repayment_period,omitempty"`
 	AccountNumber    string                 `protobuf:"bytes,11,opt,name=account_number,json=accountNumber,proto3" json:"account_number,omitempty"`
 	Status           string                 `protobuf:"bytes,12,opt,name=status,proto3" json:"status,omitempty"`
 	InterestRateType string                 `protobuf:"bytes,13,opt,name=interest_rate_type,json=interestRateType,proto3" json:"interest_rate_type,omitempty"`
@@ -4147,7 +4147,7 @@ func (x *LoanRequestView) GetPhoneNumber() string {
 	return ""
 }
 
-func (x *LoanRequestView) GetRepaymentPeriod() int32 {
+func (x *LoanRequestView) GetRepaymentPeriod() int64 {
 	if x != nil {
 		return x.RepaymentPeriod
 	}
@@ -4795,7 +4795,7 @@ const file_bank_bank_proto_rawDesc = "" +
 	"\x0eaccount_number\x18\x03 \x01(\tR\raccountNumber\x12\x1f\n" +
 	"\vloan_amount\x18\x04 \x01(\x03R\n" +
 	"loanAmount\x12)\n" +
-	"\x10repayment_period\x18\x05 \x01(\x05R\x0frepaymentPeriod\x12!\n" +
+	"\x10repayment_period\x18\x05 \x01(\x03R\x0frepaymentPeriod\x12!\n" +
 	"\fnominal_rate\x18\x06 \x01(\x01R\vnominalRate\x12%\n" +
 	"\x0eeffective_rate\x18\a \x01(\x01R\reffectiveRate\x12%\n" +
 	"\x0eagreement_date\x18\b \x01(\tR\ragreementDate\x12#\n" +
@@ -4823,7 +4823,7 @@ const file_bank_bank_proto_rawDesc = "" +
 	"\x0eaccount_number\x18\x02 \x01(\tR\raccountNumber\x12\x1b\n" +
 	"\tloan_type\x18\x03 \x01(\tR\bloanType\x12\x16\n" +
 	"\x06amount\x18\x04 \x01(\x03R\x06amount\x12)\n" +
-	"\x10repayment_period\x18\x05 \x01(\x05R\x0frepaymentPeriod\x12\x1a\n" +
+	"\x10repayment_period\x18\x05 \x01(\x03R\x0frepaymentPeriod\x12\x1a\n" +
 	"\bcurrency\x18\x06 \x01(\tR\bcurrency\x12\x18\n" +
 	"\apurpose\x18\a \x01(\tR\apurpose\x12\x16\n" +
 	"\x06salary\x18\b \x01(\x03R\x06salary\x12+\n" +
@@ -4844,7 +4844,7 @@ const file_bank_bank_proto_rawDesc = "" +
 	"\x11employment_period\x18\b \x01(\x03R\x10employmentPeriod\x12!\n" +
 	"\fphone_number\x18\t \x01(\tR\vphoneNumber\x12)\n" +
 	"\x10repayment_period\x18\n" +
-	" \x01(\x05R\x0frepaymentPeriod\x12%\n" +
+	" \x01(\x03R\x0frepaymentPeriod\x12%\n" +
 	"\x0eaccount_number\x18\v \x01(\tR\raccountNumber\x12\x16\n" +
 	"\x06status\x18\f \x01(\tR\x06status\x12,\n" +
 	"\x12interest_rate_type\x18\r \x01(\tR\x10interestRateType\x12'\n" +
