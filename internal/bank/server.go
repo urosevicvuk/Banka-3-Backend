@@ -1520,7 +1520,8 @@ func (s *Server) GetTransfersHistoryForUserEmail(
 		return nil, status.Error(codes.Internal, "failed to get transfer history")
 		//return &bankpb.TransferHistoryResponse{History: nil}, err
 	}
-	return res, nil}
+	return res, nil
+}
 
 func (s *Server) GetLoanRequests(_ context.Context, req *bankpb.GetLoanRequestsRequest) (*bankpb.GetLoanRequestsResponse, error) {
 	loanType := ""

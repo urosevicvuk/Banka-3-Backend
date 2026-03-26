@@ -1767,7 +1767,8 @@ func (s *Server) GetTransactionsHistoryForUserEmail(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, res)}
+	c.JSON(http.StatusOK, res)
+}
 
 func (s *Server) TOTPSetupBegin(c *gin.Context) {
 	key, keyPresent := c.Get("email")
