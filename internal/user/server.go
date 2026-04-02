@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"reflect"
 	"slices"
 	"strings"
 	"time"
@@ -91,6 +92,20 @@ func (emp Employee) toProtobuf() *userpb.GetEmployeeResponse {
 	}
 }
 
+func (client Client) toProtobuff() *userpb.Client {
+	return &userpb.Client{
+		Id:          int64(client.Id),
+		FirstName:   client.First_name,
+		LastName:    client.Last_name,
+		DateOfBirth: client.Date_of_birth.Unix(),
+		Gender:      client.Gender,
+		Email:       client.Email,
+		PhoneNumber: client.Phone_number,
+		Address:     client.Address,
+	}
+}
+
+
 func (s *Server) GetEmployeeByEmail(_ context.Context, req *userpb.GetEmployeeByEmailRequest) (*userpb.GetEmployeeResponse, error) {
 	resp, err := getUserByAttribute(Employee{}, s, "email", req.Email)
 	if err != nil {
@@ -108,7 +123,8 @@ func (s *Server) GetEmployeeById(_ context.Context, req *userpb.GetEmployeeByIdR
 }
 
 func (s *Server) DeleteEmployee(_ context.Context, req *userpb.DeleteEmployeeRequest) (*userpb.DeleteEmployeeResponse, error) {
-	err := s.deleteEmployee(req.Id)
+
+	err := deleteUser(Employee{Id: uint64(req.Id)}, s)
 	if err != nil {
 		if errors.Is(err, ErrEmployeeNotFound) {
 			return nil, status.Error(codes.NotFound, "employee not found")
@@ -147,7 +163,6 @@ func (s *Server) GetEmployees(_ context.Context, req *userpb.GetEmployeesRequest
 }
 
 func (s *Server) UpdateEmployee(_ context.Context, req *userpb.UpdateEmployeeRequest) (*userpb.GetEmployeeResponse, error) {
-	println("here")
 
 	var permissions []Permission
 	for _, perm := range req.Permissions {
@@ -170,9 +185,7 @@ func (s *Server) UpdateEmployee(_ context.Context, req *userpb.UpdateEmployeeReq
 		Permissions:  permissions,
 	}
 
-	println("here2")
-
-	updated, err := s.UpdateEmployee_(&emp)
+	updated, err := updateUserRecord(emp, s)
 	if err != nil {
 		if errors.Is(err, ErrEmployeeNotFound) {
 			return nil, status.Error(codes.NotFound, "Employee not found")
@@ -186,19 +199,6 @@ func (s *Server) UpdateEmployee(_ context.Context, req *userpb.UpdateEmployeeReq
 
 }
 
-func mapClientToProto(client Client) *userpb.Client {
-	return &userpb.Client{
-		Id:          int64(client.Id),
-		FirstName:   client.First_name,
-		LastName:    client.Last_name,
-		DateOfBirth: client.Date_of_birth.Unix(),
-		Gender:      client.Gender,
-		Email:       client.Email,
-		PhoneNumber: client.Phone_number,
-		Address:     client.Address,
-	}
-}
-
 func (s *Server) GetClients(_ context.Context, req *userpb.GetClientsRequest) (*userpb.GetClientsResponse, error) {
 
 	clients, err := GetAllUsersFromModel(Client{}, s, user_restrictions{"first_name": strings.TrimSpace(req.FirstName), "last_name": strings.TrimSpace(req.LastName), "email": strings.TrimSpace(req.Email)})
@@ -210,7 +210,7 @@ func (s *Server) GetClients(_ context.Context, req *userpb.GetClientsRequest) (*
 
 	var clientResponses []*userpb.Client
 	for _, client := range clients {
-		clientResponses = append(clientResponses, mapClientToProto(client))
+		clientResponses = append(clientResponses, client.toProtobuff())
 	}
 
 	return &userpb.GetClientsResponse{Clients: clientResponses}, nil
@@ -223,17 +223,6 @@ func (s *Server) UpdateClient(_ context.Context, req *userpb.UpdateClientRequest
 	if strings.TrimSpace(req.Gender) != "" && req.Gender != "M" && req.Gender != "F" {
 		return nil, status.Error(codes.InvalidArgument, "Gender must be one of M or F")
 	}
-	// Is this redundant, does not UpdateClientRecord already fail if client is not present
-	// _, err := s.GetClientByID(req.Id)
-	// if err != nil {
-	// 	switch {
-	// 	case errors.Is(err, ErrClientNotFound):
-	// 		return nil, status.Error(codes.NotFound, "client not found")
-	// 	default:
-	// 		return nil, status.Error(codes.Internal, "client lookup failed")
-	// 	}
-	// }
-
 	client := Client{
 		Id:           uint64(req.Id),
 		First_name:   req.FirstName,
@@ -243,11 +232,29 @@ func (s *Server) UpdateClient(_ context.Context, req *userpb.UpdateClientRequest
 		Phone_number: req.PhoneNumber,
 		Address:      req.Address,
 	}
+
+	// I hope any potential reader of this has as much fun reading it as I had Implementing it.
+	ref := reflect.ValueOf(&client).Elem()
+	for i := 0; i < ref.NumField(); i++ {
+		field := ref.Field(i)
+		if field.Type() == reflect.TypeFor[string](){
+			if !field.CanSet(){
+				log.Println("cannot set the value of struct field")
+				// This need not be an error, but it will also probably
+				// never happen
+				return nil, status.Error(codes.Internal, "client update failed")
+			}
+			field.SetString(strings.TrimSpace(field.String()))
+		}
+		
+	}
+	
 	if req.DateOfBirth != 0 {
 		client.Date_of_birth = time.Unix(req.DateOfBirth, 0)
 	}
 
-	err := s.UpdateClientRecord(&client)
+	
+	_, err := updateUserRecord(client, s)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrClientNotFound):

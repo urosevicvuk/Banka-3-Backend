@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -28,7 +27,6 @@ type (
 	// But We should disambiguate what purpose
 	// these are used for
 	user_restrictions = map[string]string
-	user_updates      = map[string]string
 )
 
 var ErrInvalidPasswordActionToken = errors.New("invalid or expired password token")
@@ -210,43 +208,6 @@ func (s *Server) RevokeRefreshTokensByEmail(tx *sql.Tx, email string) error {
 	return nil
 }
 
-func scanClient(scanner interface {
-	Scan(dest ...any) error
-}) (*Client, error) {
-	var client Client
-	err := scanner.Scan(
-		&client.Id,
-		&client.First_name,
-		&client.Last_name,
-		&client.Date_of_birth,
-		&client.Gender,
-		&client.Email,
-		&client.Phone_number,
-		&client.Address,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &client, nil
-}
-
-func (s *Server) GetClientByID(id int64) (*Client, error) {
-	row := s.database.QueryRow(`
-		SELECT id, first_name, last_name, date_of_birth, gender, email, phone_number, address
-		FROM clients
-		WHERE id = $1
-	`, id)
-
-	client, err := scanClient(row)
-	if err == sql.ErrNoRows {
-		return nil, ErrClientNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("getting client by id: %w", err)
-	}
-
-	return client, nil
-}
 
 func GetAllUsersFromModel[T Client | Employee](user T, s *Server, constraints user_restrictions) ([]T, error) {
 	add_constraints := func(query *gorm.DB, restrictions user_restrictions) *gorm.DB {
@@ -262,29 +223,20 @@ func GetAllUsersFromModel[T Client | Employee](user T, s *Server, constraints us
 		}
 		return query
 	}
-	// Me when I don't have template specialization frfr
 	switch any(user).(type) {
-	case Client:
-		var clients []T
-		query := s.db_gorm.Model(&Client{})
+	case Client, Employee:
+		var users []T
+		query := s.db_gorm.Model(&user).Preload("Permissions")
 		query = add_constraints(query, constraints)
-		err := query.Find(&clients).Error
+		err := query.Find(&users).Error
 		if err != nil {
 			return nil, err
 		}
-		return clients, nil
+		return users, nil
 
-	case Employee:
-		var employees []T
-		query := s.db_gorm.Model(&Employee{}).Preload("Permissions")
-		query = add_constraints(query, constraints)
-		err := query.Find(&employees).Error
-		if err != nil {
-			return nil, err
-		}
-		return employees, nil
+	default:
+		return nil, fmt.Errorf("Called with a type which is neither Client nor employee")
 	}
-	return nil, fmt.Errorf("Called with a type which is neither Client nor employee")
 }
 
 func isUniqueViolation(err error) bool {
@@ -313,117 +265,64 @@ func getUserByAttribute[T Client | Employee](user T, s *Server, attribute_name s
 	return &ret, nil
 }
 
-func (s *Server) deleteEmployee(id int64) error {
-	resp := s.db_gorm.Delete(&Employee{}, id)
-	if resp.RowsAffected == 0 {
+func deleteUser[T Client | Employee](user T, s *Server) error{
+	result := s.db_gorm.Delete(&user)
+	if result.RowsAffected == 0 {
 		return ErrEmployeeNotFound
+	} else if result.Error != nil {
+		log.Println("Error in deleteUser: ", result.Error)
 	}
 	return nil
+
 }
 
-func (s *Server) UpdateClientRecord(client *Client) error {
-	updates := map[string]any{}
+func userExists[T Client | Employee](user T, s *Server) bool{
+	result := s.db_gorm.First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound){
+		return false
+	} else if result.Error != nil{
+		log.Println("Error occured in userExists: ", result.Error)
+		return false
+	}
+	return true
+}
 
-	if strings.TrimSpace(client.First_name) != "" {
-		updates["first_name"] = strings.TrimSpace(client.First_name)
-	}
-	if strings.TrimSpace(client.Last_name) != "" {
-		updates["last_name"] = strings.TrimSpace(client.Last_name)
-	}
-	if !client.Date_of_birth.IsZero() {
-		updates["date_of_birth"] = client.Date_of_birth
-	}
-	if strings.TrimSpace(client.Gender) != "" {
-		updates["gender"] = strings.TrimSpace(client.Gender)
-	}
-	if strings.TrimSpace(client.Email) != "" {
-		updates["email"] = strings.TrimSpace(client.Email)
-	}
-	if strings.TrimSpace(client.Phone_number) != "" {
-		updates["phone_number"] = strings.TrimSpace(client.Phone_number)
-	}
-	if strings.TrimSpace(client.Address) != "" {
-		updates["address"] = strings.TrimSpace(client.Address)
+func updateUserRecord[T Client | Employee](user T, s *Server) (*T, error) {
+	find_perm_by_name := func(perm_name string) uint64 {
+		var perms Permission
+		s.db_gorm.First(&perms, "name = ?", perm_name)
+		return perms.Id
 	}
 
-	if len(updates) == 0 {
-		return ErrClientNoFieldsToUpdate
+	var result *gorm.DB
+	switch any(user).(type) {
+	case Client:
+		if userExists(user, s) == true {
+			result = s.db_gorm.Model(&user).Updates(user)
+		}
+
+	case Employee:
+		for index, val := range any(user).(Employee).Permissions {
+			any(user).(Employee).Permissions[index].Id = find_perm_by_name(val.Name)
+		}
+		if userExists(user, s){
+			result = s.db_gorm.Model(&user).Updates(user)
+		}
 	}
-
-	updates["updated_at"] = time.Now()
-
-	result := s.db_gorm.Model(&Client{}).Where("id = ?", client.Id).Updates(updates)
+	
 	if result.Error != nil {
 		if isUniqueViolation(result.Error) {
-			return ErrClientEmailExists
+			return nil, ErrClientEmailExists
 		}
-		return fmt.Errorf("updating client: %w", result.Error)
+		return nil, fmt.Errorf("updating user record: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return ErrClientNotFound
+		return nil, ErrClientNotFound
 	}
 
-	return nil
+	return &user, nil
 }
 
-// Try to fix this once you understand gorm
-func (s *Server) UpdateEmployee_(emp *Employee) (*Employee, error) {
-
-	updates := map[string]any{
-		"first_name":   emp.First_name,
-		"last_name":    emp.Last_name,
-		"gender":       emp.Gender,
-		"phone_number": emp.Phone_number,
-		"address":      emp.Address,
-		"position":     emp.Position,
-		"department":   emp.Department,
-		"active":       emp.Active,
-	}
-
-	tx := s.db_gorm.Begin()
-
-	if err := tx.Model(&Employee{}).
-		Where("id = ?", emp.Id).
-		Updates(updates).Error; err != nil {
-		tx.Rollback()
-		return nil, ErrEmployeeNotFound
-	}
-
-	var perms []Permission
-	var names []string
-
-	for _, p := range emp.Permissions {
-		names = append(names, p.Name)
-	}
-
-	if err := tx.
-		Where("name IN ?", names).
-		Find(&perms).Error; err != nil {
-		tx.Rollback()
-		return nil, ErrUnknownPermission
-	}
-
-	if err := tx.Model(emp).
-		Association("Permissions").
-		Replace(&perms); err != nil {
-		tx.Rollback()
-		return nil, ErrEmployeeNotFound
-	}
-
-	var updated Employee
-	if err := tx.
-		Preload("Permissions").
-		First(&updated, emp.Id).Error; err != nil {
-		tx.Rollback()
-		return nil, ErrEmployeeNotFound
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		return nil, err
-	}
-
-	return &updated, nil
-}
 
 var ErrUserNotFound = errors.New("user not found")
 
