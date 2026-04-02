@@ -516,7 +516,7 @@ func (s *Server) requestPasswordAction(ctx context.Context, email string, action
 	}
 
 	if err := s.sendPasswordActionEmail(ctx, user.email, link, actionType); err != nil {
-		return nil, status.Error(codes.Internal, "sending password email failed")
+		return nil, err
 	}
 
 	return &userpb.PasswordActionResponse{Accepted: true}, nil

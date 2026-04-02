@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -226,7 +227,12 @@ func GetAllUsersFromModel[T Client | Employee](user T, s *Server, constraints us
 	switch any(user).(type) {
 	case Client, Employee:
 		var users []T
-		query := s.db_gorm.Model(&user).Preload("Permissions")
+		var query *gorm.DB
+		if reflect.TypeOf(any(user)) == reflect.TypeFor[Employee](){
+			query = s.db_gorm.Model(&user).Preload("Permissions")
+		} else {
+			query = s.db_gorm.Model(&user)
+		}
 		query = add_constraints(query, constraints)
 		err := query.Find(&users).Error
 		if err != nil {
