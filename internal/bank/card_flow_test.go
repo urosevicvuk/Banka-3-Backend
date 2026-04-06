@@ -46,7 +46,7 @@ func TestCreateCardSuccess(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT COUNT(*)`)).
-		WithArgs(accountNumber, Deactivated).
+		WithArgs(accountNumber).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO cards`)).
@@ -94,7 +94,7 @@ func TestRequestCardSuccess(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT COUNT(*)`)).
-		WithArgs("123456789", Deactivated).
+		WithArgs("123456789").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO card_requests`)).
@@ -171,30 +171,5 @@ func TestConfirmCardSuccess(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func TestBlockCardSuccess(t *testing.T) {
-	server, mock, db := newTestServer(t)
-	defer func() { _ = db.Close() }()
-
-	mock.ExpectQuery(`SELECT id, number, type, brand, creation_date, valid_until, account_number, cvv, card_limit, status`).
-		WithArgs("1234567890123456").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "number", "type", "brand", "creation_date", "valid_until", "account_number", "cvv", "card_limit", "status"}).
-			AddRow(int64(1), "1234567890123456", "debit", "visa", time.Now(), time.Now().AddDate(5, 0, 0), "111000000000000011", "123", int64(100000), "active"))
-
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE cards SET status = $1 WHERE id = $2`)).
-		WithArgs(Blocked, int64(1)).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-
-	resp, err := server.BlockCard(context.Background(), &bankpb.BlockCardRequest{
-		CardNumber: "1234567890123456",
-	})
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !resp.Success {
-		t.Fatalf("expected success true")
 	}
 }

@@ -109,7 +109,7 @@ func (s *Server) BlockCard(c *gin.Context) {
 	md := metadata.Pairs("user-email", email)
 	ctx := metadata.NewOutgoingContext(c.Request.Context(), md)
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	_, err := s.BankClient.BlockCard(ctx, &bankpb.BlockCardRequest{
