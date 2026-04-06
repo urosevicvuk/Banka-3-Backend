@@ -1158,7 +1158,7 @@ func validateCreateAccountInput(name string, owner int64, currency string, owner
 	return nil
 }
 
-func (s *Server) CreateAccount(ctx context.Context, req *bankpb.CreateAccountRequest) (*bankpb.CreateAccountResponse, error) {
+func (s *Server) CreateAccount(_ context.Context, req *bankpb.CreateAccountRequest) (*bankpb.CreateAccountResponse, error) {
 	name := strings.TrimSpace(req.Name)
 	currency := strings.TrimSpace(req.Currency)
 	ownerType := strings.TrimSpace(strings.ToLower(req.OwnerType))
@@ -1210,18 +1210,22 @@ func (s *Server) CreateAccount(ctx context.Context, req *bankpb.CreateAccountReq
 		}
 	}
 
-	client, err := s.UserService.GetClientById(ctx, &userpb.GetUserByIdRequest{
-		Id: req.Owner,
-	})
-	if err != nil {
-		// return
-		return nil, status.Error(codes.NotFound, "couldn't find owner client")
-	}
-	email := client.Email
-	s.NotificationService.SendBankAccountCreationEmail(ctx, &notificationpb.SendBankAccountCreationEmailRequest{
-		ToAddr:      email,
-		AccountName: name,
-	})
+	go func() {
+		client, err := s.UserService.GetClientById(context.Background(), &userpb.GetUserByIdRequest{
+			Id: req.Owner,
+		})
+		if err != nil {
+			return
+		}
+		email := client.Email
+		_, err = s.NotificationService.SendBankAccountCreationEmail(context.Background(), &notificationpb.SendBankAccountCreationEmailRequest{
+			ToAddr:      email,
+			AccountName: name,
+		})
+		if err != nil {
+			log.Printf("error in sending email %v", err)
+		}
+	}()
 
 	return &bankpb.CreateAccountResponse{
 		Valid:         true,
