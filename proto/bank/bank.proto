@@ -32,7 +32,7 @@ service BankService {
   rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
   rpc GetAccountDetails(GetAccountDetailsRequest) returns (GetAccountDetailsResponse);
   rpc ListClientTransactions(ListClientTranasctionsRequest) returns (ListClientTransactionsResponse);
-  
+
   rpc GetLoans(GetLoansRequest) returns (GetLoansResponse);
   rpc GetLoanByNumber(GetLoanByNumberRequest) returns (Loan);
   rpc CreateLoanRequest(CreateLoanRequestRequest) returns (CreateLoanRequestResponse);
@@ -87,8 +87,7 @@ message GetCardsResponse {
 }
 
 message BlockCardRequest {
-  int64 card_id = 1;
-  string card_number = 2;
+  string card_number = 1;
 }
 
 message BlockCardResponse {
