@@ -95,6 +95,7 @@ func (s *Server) ListClientTransactions(ctx context.Context, req *bankpb.ListCli
 	}
 
 	transactions, err := s.GetFilteredTransactions(accNumbers, req.AccountNumber, req.Date, req.Amount, req.Status)
+	// fmt.Printf("GetFilteredTransactions(%v, %v, %v, %v, %v) = %v, %v\n", accNumbers, req.AccountNumber, req.Date, req.Amount, req.Status, transactions, err)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to fetch transactions")
 	}
@@ -268,9 +269,9 @@ func (s *Server) mapSliceToProto(accounts []Account) []*bankpb.Account {
 }
 
 func (s *Server) mapToAccountProto(a Account) *bankpb.Account {
-	statusStr := "Inactive"
+	statusStr := "Neaktivan"
 	if a.Active {
-		statusStr = "Active"
+		statusStr = "Aktivan"
 	}
 
 	return &bankpb.Account{
@@ -322,12 +323,15 @@ func (s *Server) CreateAccount(ctx context.Context, req *bankpb.CreateAccountReq
 
 	ownerType := Personal
 	subtypeLower := strings.ToLower(req.Subtype)
-	if strings.Contains(subtypeLower, "business") || strings.Contains(subtypeLower, "poslovni") {
+	if req.AccountType == "business" || req.AccountType == "poslovni" || strings.Contains(subtypeLower, "business") || strings.Contains(subtypeLower, "poslovni") {
 		ownerType = Business
 	}
 
+	// Generate a default account name
+	accountName := fmt.Sprintf("%s-%s", req.AccountType, req.Subtype)
+
 	account := Account{
-		Name:              fmt.Sprintf("%s-%s", req.AccountType, req.Subtype),
+		Name:              accountName,
 		Owner:             req.ClientId,
 		Currency:          req.Currency,
 		Owner_type:        ownerType,
@@ -364,16 +368,27 @@ func (s *Server) CreateAccount(ctx context.Context, req *bankpb.CreateAccountReq
 		}
 	}
 
+	statusStr := "Neaktivan"
+	if created.Active {
+		statusStr = "Aktivan"
+	}
+
 	return &bankpb.CreateAccountResponse{
-		AccountNumber:  created.Number,
-		AccountName:    created.Name,
-		OwnerId:        created.Owner,
-		Balance:        float64(created.Balance) / 100,
-		Currency:       created.Currency,
-		AccountType:    string(created.Account_type),
-		DailyLimit:     float64(created.Daily_limit),
-		MonthlyLimit:   float64(created.Monthly_limit),
-		ExpirationDate: created.Valid_until.Format(time.RFC3339),
+		AccountNumber:    created.Number,
+		AccountName:      created.Name,
+		OwnerId:          created.Owner,
+		Balance:          float64(created.Balance) / 100,
+		AvailableBalance: float64(created.Balance) / 100, // TODO: dodati kolonu u bazi za ovo ????
+		EmployeeId:       created.Created_by,
+		CreationDate:     created.Created_at.Format(time.RFC3339),
+		ExpirationDate:   created.Valid_until.Format(time.RFC3339),
+		Currency:         created.Currency,
+		Status:           statusStr,
+		AccountType:      string(created.Account_type),
+		DailyLimit:       float64(created.Daily_limit),
+		MonthlyLimit:     float64(created.Monthly_limit),
+		DailySpending:    float64(created.Daily_expenditure),
+		MonthlySpending:  float64(created.Monthly_expenditure),
 	}, nil
 }
 
@@ -386,17 +401,30 @@ func validateCreateAccountInput(req *bankpb.CreateAccountRequest) error {
 	}
 
 	accType := strings.ToLower(req.AccountType)
-	if accType != "checking" && accType != "foreign" && accType != "tekuci" && accType != "devizni" {
-		return status.Error(codes.InvalidArgument, "invalid account_type: must be checking or foreign")
+	if accType != "checking" && accType != "foreign" && accType != "tekuci" && accType != "devizni" && accType != "business" && accType != "poslovni" {
+		return status.Error(codes.InvalidArgument, "invalid account_type: must be checking, foreign, or business")
 	}
 
 	if req.InitialBalance < 0 {
 		return status.Error(codes.InvalidArgument, "initial_balance cannot be negative")
 	}
 
-	subtypeLower := strings.ToLower(req.Subtype)
-	if (strings.Contains(subtypeLower, "business") || strings.Contains(subtypeLower, "poslovni")) && req.BusinessInfo == nil {
+	isBusiness := accType == "business" || accType == "poslovni"
+	if isBusiness && req.BusinessInfo == nil {
 		return status.Error(codes.InvalidArgument, "business_info is required for business accounts")
 	}
+
+	if isBusiness && req.BusinessInfo != nil {
+		if strings.TrimSpace(req.BusinessInfo.CompanyName) == "" {
+			return status.Error(codes.InvalidArgument, "business_info.company_name is required")
+		}
+		if strings.TrimSpace(req.BusinessInfo.Pib) == "" {
+			return status.Error(codes.InvalidArgument, "business_info.pib is required")
+		}
+		if strings.TrimSpace(req.BusinessInfo.RegistrationNumber) == "" {
+			return status.Error(codes.InvalidArgument, "business_info.registration_number is required")
+		}
+	}
+
 	return nil
 }

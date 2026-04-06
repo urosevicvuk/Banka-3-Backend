@@ -183,7 +183,6 @@ func (s *Server) GetFilteredTransactions(accNumbers []string, accountNumber stri
 
 // CreateAccountRecord handles the database transaction to insert a new account.
 func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
-	// Apply defaults if not provided
 	if account.Valid_until.IsZero() {
 		account.Valid_until = time.Now().AddDate(5, 0, 0)
 	}
@@ -191,7 +190,6 @@ func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
 	account.Daily_expenditure = 0
 	account.Monthly_expenditure = 0
 
-	// Handle Nullable Limits for the SQL driver
 	var dailyLimit, monthlyLimit sql.NullInt64
 	if account.Daily_limit != 0 {
 		dailyLimit = sql.NullInt64{Int64: account.Daily_limit, Valid: true}
@@ -200,14 +198,12 @@ func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
 		monthlyLimit = sql.NullInt64{Int64: account.Monthly_limit, Valid: true}
 	}
 
-	// Retry loop (up to 5 times) to handle potential account number collisions
 	for range 5 {
 		tx, err := s.database.Begin()
 		if err != nil {
 			return nil, fmt.Errorf("starting transaction: %w", err)
 		}
 
-		// Integrity Checks: Ensure foreign keys exist before attempting insert
 		var exists bool
 		if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM clients WHERE id = $1)`, account.Owner).Scan(&exists); err != nil || !exists {
 			_ = tx.Rollback()
@@ -222,7 +218,6 @@ func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
 			return nil, ErrAccountCurrencyNotFound
 		}
 
-		// Generate a unique 20-digit account number
 		number, err := s.generateAccountNumber(tx)
 		if err != nil {
 			_ = tx.Rollback()
@@ -230,7 +225,6 @@ func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
 		}
 		account.Number = number
 
-		// Insert account including Business Info fields
 		row := tx.QueryRow(`
 			INSERT INTO accounts (
 				number, name, owner, balance, created_by, valid_until, currency, active,
@@ -257,7 +251,7 @@ func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
 			_ = tx.Rollback()
 			if isUniqueViolation(err) {
 				continue
-			} // Retry if number clashed
+			}
 			return nil, fmt.Errorf("creating account: %w", err)
 		}
 
@@ -269,25 +263,35 @@ func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
 	return nil, ErrAccountNumberGenerationFailed
 }
 
-// scanAccount maps a SQL row to the Account struct including nullable fields.
 func (s *Server) scanAccount(row *sql.Row) (*Account, error) {
 	var a Account
 	var dailyLimit, monthlyLimit, dailyExp, monthlyExp sql.NullInt64
+	// Use NullStrings for business fields to prevent errors on NULL database values
+	var compName, regNum, pib, actCode, addr sql.NullString
 
 	err := row.Scan(
 		&a.Id, &a.Number, &a.Name, &a.Owner, &a.Balance, &a.Created_by, &a.Created_at, &a.Valid_until,
 		&a.Currency, &a.Active, &a.Owner_type, &a.Account_type, &a.Maintainance_cost, &dailyLimit,
 		&monthlyLimit, &dailyExp, &monthlyExp,
-		&a.CompanyName, &a.RegistrationNumber, &a.PIB, &a.ActivityCode, &a.Address,
+		&compName, &regNum, &pib, &actCode, &addr,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	// Map NullInt64 back to int64
 	a.Daily_limit = dailyLimit.Int64
 	a.Monthly_limit = monthlyLimit.Int64
 	a.Daily_expenditure = dailyExp.Int64
 	a.Monthly_expenditure = monthlyExp.Int64
+
+	// Map NullString back to string
+	a.CompanyName = compName.String
+	a.RegistrationNumber = regNum.String
+	a.PIB = pib.String
+	a.ActivityCode = actCode.String
+	a.Address = addr.String
+
 	return &a, nil
 }
 
