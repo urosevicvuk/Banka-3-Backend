@@ -41,6 +41,22 @@ func connectToDB() *sql.DB {
 	return db
 }
 
+func connectToRedis() *redis.Client {
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "redis:6379"
+	}
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: os.Getenv("REDIS_PASSWORD"),
+	})
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		log.Fatalf("failed to connect to Redis at %s: %v", redisAddr, err)
+	}
+	log.Println("connected to Redis...")
+	return rdb
+}
+
 func connect() (*internalUser.Connections, error) {
 	notificationAddr := os.Getenv("NOTIFICATION_GRPC_ADDR")
 	if notificationAddr == "" {
@@ -82,20 +98,7 @@ func main() {
 		log.Fatalf("JWT secrets not set, exiting...")
 	}
 
-	redisAddr := os.Getenv("REDIS_ADDR")
-	if redisAddr == "" {
-		redisAddr = "redis:6379"
-	}
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: os.Getenv("REDIS_PASSWORD"),
-	})
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		log.Fatalf("failed to connect to Redis at %s: %v", redisAddr, err)
-	}
-	log.Println("connected to Redis...")
-
-	connections.Rdb = rdb
+	connections.Rdb = connectToRedis()
 
 	userService := internalUser.NewServer(accessJwtSecret, refreshJwtSecret, connections)
 	totpService := internalUser.NewTotpServer(connections)
