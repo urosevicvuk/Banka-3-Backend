@@ -43,6 +43,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			"rpc_service", path.Dir(info.FullMethod)[1:],
 		)
 		ctx = WithContext(ctx, l)
+		ctx = WithRequestID(ctx, reqID)
 
 		l.DebugContext(ctx, "rpc start")
 		resp, err := handler(ctx, req)
@@ -74,7 +75,9 @@ func StreamServerInterceptor() grpc.StreamServerInterceptor {
 			"stream", true,
 		)
 
-		wrapped := &wrappedStream{ServerStream: ss, ctx: WithContext(ctx, l)}
+		streamCtx := WithContext(ctx, l)
+		streamCtx = WithRequestID(streamCtx, reqID)
+		wrapped := &wrappedStream{ServerStream: ss, ctx: streamCtx}
 		l.DebugContext(ctx, "stream start")
 		err := handler(srv, wrapped)
 		dur := time.Since(start)
