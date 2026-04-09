@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 
@@ -21,7 +20,7 @@ func connect_to_db_gorm() *gorm.DB {
 	dsn := os.Getenv("DATABASE_URL")
 	gorm_db, gorm_err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if gorm_err != nil {
-		slog.Error("gorm open failed", "err", gorm_err, "dsn", dsn)
+		logger.L().Error("gorm open failed", "err", gorm_err, "dsn", dsn)
 		os.Exit(1)
 	}
 	return gorm_db
@@ -31,7 +30,7 @@ func connectToDB() *sql.DB {
 	connStr := os.Getenv("DATABASE_URL")
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		slog.Error("sql open failed", "err", err)
+		logger.L().Error("sql open failed", "err", err)
 		os.Exit(1)
 	}
 	return db
@@ -47,13 +46,13 @@ func main() {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
-		slog.Error("failed to listen", "port", port, "err", err)
+		logger.L().Error("failed to listen", "port", port, "err", err)
 		os.Exit(1)
 	}
 
 	db := connectToDB()
 	gorm_db := connect_to_db_gorm()
-	slog.Info("connected to database")
+	logger.L().Info("connected to database")
 	defer func() { _ = db.Close() }()
 
 	exchangeService := internalExchange.NewServer(gorm_db)
@@ -65,9 +64,9 @@ func main() {
 	exchange.RegisterExchangeServiceServer(srv, exchangeService)
 	reflection.Register(srv)
 
-	slog.Info("exchange service listening", "port", port)
+	logger.L().Info("exchange service listening", "port", port)
 	if err := srv.Serve(lis); err != nil {
-		slog.Error("failed to serve", "err", err)
+		logger.L().Error("failed to serve", "err", err)
 		os.Exit(1)
 	}
 }

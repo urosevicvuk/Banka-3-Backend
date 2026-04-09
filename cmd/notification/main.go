@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 
@@ -24,7 +23,7 @@ func main() {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
-		slog.Error("failed to listen", "port", port, "err", err)
+		logger.L().Error("failed to listen", "port", port, "err", err)
 		os.Exit(1)
 	}
 	grpcServer := grpc.NewServer(
@@ -36,9 +35,9 @@ func main() {
 
 	notification.RegisterNotificationServiceServer(grpcServer, server)
 	reflection.Register(grpcServer)
-	slog.Info("notification service listening", "port", port)
+	logger.L().Info("notification service listening", "port", port)
 	if err := grpcServer.Serve(lis); err != nil {
-		slog.Error("failed to serve", "err", err)
+		logger.L().Error("failed to serve", "err", err)
 		os.Exit(1)
 	}
 }

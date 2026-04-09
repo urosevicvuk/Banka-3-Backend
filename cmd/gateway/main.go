@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log/slog"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -18,14 +17,14 @@ func main() {
 
 	server, err := gateway.NewServer()
 	if err != nil {
-		slog.Error("error connecting to services", "err", err)
+		logger.L().Error("error connecting to services", "err", err)
 		os.Exit(1)
 	}
 
 	gateway.SetupApi(router, server)
 
 	if err := router.Run(":8080"); err != nil {
-		slog.Error("gateway stopped", "err", err)
+		logger.L().Error("gateway stopped", "err", err)
 		os.Exit(1)
 	}
 }

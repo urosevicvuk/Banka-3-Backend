@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math/big"
 	"os"
 	"time"
@@ -37,7 +36,7 @@ const (
 func NewTotpServer(conn *Connections) *TOTPServer {
 	baseURL := os.Getenv("TOTP_DISABLE_BASE_URL")
 	if baseURL == "" {
-		slog.Error("no url set for disabling TOTP")
+		logger.L().Error("no url set for disabling TOTP")
 		os.Exit(1)
 	}
 	return &TOTPServer{
