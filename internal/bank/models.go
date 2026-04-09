@@ -112,6 +112,7 @@ type (
 		Number              string       `gorm:"column:number;type:varchar(20);not null;unique"`
 		Name                string       `gorm:"column:name;type:varchar(127);not null"`
 		Owner               int64        `gorm:"column:owner;type:bigint;not null;references clients(id)"`
+		CompanyID           *int64       `gorm:"column:company_id;type:bigint;default:null;constraint:OnDelete:CASCADE;references:companies(id)"` // Ovde se koristi pointer jer moze da bude NULL
 		Balance             int64        `gorm:"column:balance;type:bigint;not null;default 0"`
 		Created_by          int64        `gorm:"column:created_by;type:bigint;not null;references employees(id)"`
 		Created_at          time.Time    `gorm:"column:created_at;not null;autoCreateTime"`

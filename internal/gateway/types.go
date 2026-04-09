@@ -137,7 +137,7 @@ type updateCompanyRequest struct {
 	OwnerID        int64  `json:"owner_id" binding:"required"`
 }
 
-type createAccountRequest struct {
+type CreateAccountRequest struct {
 	ClientID       int64         `json:"client_id" binding:"required"`
 	AccountType    string        `json:"account_type" binding:"required"`
 	Subtype        string        `json:"subtype" binding:"required"`
@@ -146,10 +146,12 @@ type createAccountRequest struct {
 	DailyLimit     float64       `json:"daily_limit"`
 	MonthlyLimit   float64       `json:"monthly_limit"`
 	CreateCard     bool          `json:"create_card"`
-	BusinessInfo   *businessInfo `json:"business_info"`
+	CardType       string        `json:"card_type"`
+	CardBrand      string        `json:"card_brand"`
+	BusinessInfo   *BusinessInfo `json:"business_info"`
 }
 
-type businessInfo struct {
+type BusinessInfo struct {
 	CompanyName        string `json:"company_name" binding:"required"`
 	RegistrationNumber string `json:"registration_number" binding:"required"`
 	PIB                string `json:"pib" binding:"required"`

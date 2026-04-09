@@ -1,8 +1,13 @@
 package bank
 
 import (
+	cryptorand "crypto/rand"
+	"database/sql"
 	"errors"
 	"fmt"
+	"math/big"
+	"strings"
+	"time"
 
 	bankpb "github.com/RAF-SI-2025/Banka-3-Backend/gen/bank"
 )
@@ -68,7 +73,7 @@ func (s *Server) UpdateAccountLimitsRecord(accountNumber string, dailyLimit *int
 
 func (s *Server) GetActiveAccountsByOwnerID(ownerID int64) ([]Account, error) {
 	var accounts []Account
-	result := s.db_gorm.Where(&Account{Owner: int64(ownerID), Active: true}).
+	result := s.db_gorm.Where(&Account{Owner: ownerID, Active: true}).
 		Order("balance DESC").
 		Find(&accounts)
 	return accounts, result.Error
@@ -174,4 +179,133 @@ func (s *Server) GetFilteredTransactions(accNumbers []string, accountNumber stri
 	}
 
 	return pbTransactions, nil
+}
+
+// CreateAccountRecord handles the database transaction to insert a new account.
+func (s *Server) CreateAccountRecord(account Account) (*Account, error) {
+	if account.Valid_until.IsZero() {
+		account.Valid_until = time.Now().AddDate(5, 0, 0)
+	}
+	account.Active = true
+	account.Daily_expenditure = 0
+	account.Monthly_expenditure = 0
+
+	var dailyLimit, monthlyLimit sql.NullInt64
+	if account.Daily_limit != 0 {
+		dailyLimit = sql.NullInt64{Int64: account.Daily_limit, Valid: true}
+	}
+	if account.Monthly_limit != 0 {
+		monthlyLimit = sql.NullInt64{Int64: account.Monthly_limit, Valid: true}
+	}
+
+	for range 5 {
+		tx, err := s.database.Begin()
+		if err != nil {
+			return nil, fmt.Errorf("starting transaction: %w", err)
+		}
+
+		var exists bool
+		if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM clients WHERE id = $1)`, account.Owner).Scan(&exists); err != nil || !exists {
+			_ = tx.Rollback()
+			return nil, ErrAccountOwnerNotFound
+		}
+		if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM employees WHERE id = $1)`, account.Created_by).Scan(&exists); err != nil || !exists {
+			_ = tx.Rollback()
+			return nil, ErrAccountCreatorNotFound
+		}
+		if err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM currencies WHERE label = $1)`, account.Currency).Scan(&exists); err != nil || !exists {
+			_ = tx.Rollback()
+			return nil, ErrAccountCurrencyNotFound
+		}
+
+		number, err := s.generateAccountNumber(tx)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, err
+		}
+		account.Number = number
+
+		row := tx.QueryRow(`
+    INSERT INTO accounts (
+     number, name, owner, company_id, balance, created_by, valid_until, currency, active,
+     owner_type, account_type, maintainance_cost, daily_limit, monthly_limit,
+     daily_expenditure, monthly_expenditure
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+    RETURNING
+     id, number, name, owner, company_id, balance, created_by, created_at, valid_until,
+     currency, active, owner_type, account_type, maintainance_cost, daily_limit,
+     monthly_limit, daily_expenditure, monthly_expenditure
+   `,
+			account.Number, account.Name, account.Owner, account.CompanyID, account.Balance, account.Created_by,
+			account.Valid_until, account.Currency, account.Active, string(account.Owner_type),
+			string(account.Account_type), account.Maintainance_cost, dailyLimit, monthlyLimit,
+			account.Daily_expenditure, account.Monthly_expenditure,
+		)
+
+		created, err := s.scanAccount(row)
+		if err != nil {
+			_ = tx.Rollback()
+			if isUniqueViolation(err) {
+				continue
+			}
+			return nil, fmt.Errorf("creating account: %w", err)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return nil, fmt.Errorf("committing transaction: %w", err)
+		}
+		return created, nil
+	}
+	return nil, ErrAccountNumberGenerationFailed
+}
+
+func (s *Server) scanAccount(row *sql.Row) (*Account, error) {
+	var a Account
+	var dailyLimit, monthlyLimit, dailyExp, monthlyExp sql.NullInt64
+	// Use NullStrings for business fields to prevent errors on NULL database values
+	var compName, regNum, pib, actCode, addr sql.NullString
+
+	err := row.Scan(
+		&a.Id, &a.Number, &a.Name, &a.Owner, &a.Balance, &a.Created_by, &a.Created_at, &a.Valid_until,
+		&a.Currency, &a.Active, &a.Owner_type, &a.Account_type, &a.Maintainance_cost, &dailyLimit,
+		&monthlyLimit, &dailyExp, &monthlyExp,
+		&compName, &regNum, &pib, &actCode, &addr,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map NullInt64 back to int64
+	a.Daily_limit = dailyLimit.Int64
+	a.Monthly_limit = monthlyLimit.Int64
+	a.Daily_expenditure = dailyExp.Int64
+	a.Monthly_expenditure = monthlyExp.Int64
+
+	return &a, nil
+}
+
+func (s *Server) generateAccountNumber(tx *sql.Tx) (string, error) {
+	for range 5 {
+		number, _ := randomDigits(20)
+		var exists bool
+		err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM accounts WHERE number = $1)`, number).Scan(&exists)
+		if err == nil && !exists {
+			return number, nil
+		}
+	}
+	return "", ErrAccountNumberGenerationFailed
+}
+
+func randomDigits(length int) (string, error) {
+	var builder strings.Builder
+	builder.Grow(length)
+	for i := 0; i < length; i++ {
+		digit, err := cryptorand.Int(cryptorand.Reader, big.NewInt(10))
+		if err != nil {
+			return "", err
+		}
+		builder.WriteByte(byte('0' + digit.Int64()))
+	}
+	return builder.String(), nil
 }

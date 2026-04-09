@@ -13,6 +13,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type TestNotificationServer struct {
+	notificationpb.UnimplementedNotificationServiceServer
+}
+
 func newTestServer(t *testing.T) (*Server, sqlmock.Sqlmock, *sql.DB) {
 	t.Helper()
 	db, mock, err := sqlmock.New()
@@ -39,6 +43,7 @@ func newGormTestServer(t *testing.T) (*Server, sqlmock.Sqlmock, *sql.DB) {
 	return server, mock, db
 }
 
+//lint:ignore U1000 reasons for ignoring
 func startNotificationTestServer(t *testing.T, handler notificationpb.NotificationServiceServer) (string, func()) {
 	t.Helper()
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
@@ -56,6 +61,7 @@ func startNotificationTestServer(t *testing.T, handler notificationpb.Notificati
 	}
 }
 
+//lint:ignore U1000 reasons for ignoring
 func startUserTestServer(t *testing.T, handler userpb.UserServiceServer) (string, func()) {
 	t.Helper()
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
