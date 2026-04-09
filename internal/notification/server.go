@@ -251,3 +251,26 @@ func (s *Server) SendTOTPDisableEmail(_ context.Context, req *notification.SendT
 	}
 	return &notification.SuccessResponse{Successful: true}, nil
 }
+
+func (s *Server) SendBankAccountCreationEmail(_ context.Context, req *notification.SendBankAccountCreationEmailRequest) (*notification.SuccessResponse, error) {
+	println("sneding mail to " + req.ToAddr)
+	to := strings.Split(req.ToAddr, ",")
+	templ, err := template.ParseFiles("templates/bank_account_created.html")
+	if err != nil {
+		log.Printf("error in reading template :%v", err)
+		return &notification.SuccessResponse{Successful: false}, nil
+	}
+
+	var rendered bytes.Buffer
+	if err := templ.Execute(&rendered, req); err != nil {
+		log.Printf("error in filling template :%v", err)
+		return &notification.SuccessResponse{Successful: false}, nil
+	}
+
+	err = s.sender.Send(to, "Bank account created", rendered.String())
+	if err != nil {
+		log.Printf("error in sending email :%v", err)
+		return &notification.SuccessResponse{Successful: false}, nil
+	}
+	return &notification.SuccessResponse{Successful: true}, nil
+}

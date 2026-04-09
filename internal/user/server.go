@@ -81,6 +81,19 @@ func NewServer(accessJwtSecret string, refreshJwtSecret string, conn *Connection
 	}
 }
 
+func (c Client) toProtobuf() *userpb.GetClientResponse {
+	return &userpb.GetClientResponse{
+		Id:          int64(c.Id),
+		FirstName:   c.First_name,
+		LastName:    c.Last_name,
+		BirthDate:   c.Date_of_birth.Unix(),
+		Gender:      c.Gender,
+		Email:       c.Email,
+		PhoneNumber: c.Phone_number,
+		Address:     c.Address,
+	}
+}
+
 func (emp Employee) toProtobuf() *userpb.GetEmployeeResponse {
 	permissions := make([]string, len(emp.Permissions))
 	for i, v := range emp.Permissions {
@@ -116,7 +129,7 @@ func (client Client) toProtobuff() *userpb.Client {
 	}
 }
 
-func (s *Server) GetEmployeeByEmail(_ context.Context, req *userpb.GetEmployeeByEmailRequest) (*userpb.GetEmployeeResponse, error) {
+func (s *Server) GetEmployeeByEmail(_ context.Context, req *userpb.GetUserByEmailRequest) (*userpb.GetEmployeeResponse, error) {
 	resp, err := getUserByAttribute(Employee{}, s.db_gorm, "email", req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -127,8 +140,27 @@ func (s *Server) GetEmployeeByEmail(_ context.Context, req *userpb.GetEmployeeBy
 	return resp.toProtobuf(), nil
 }
 
-func (s *Server) GetEmployeeById(_ context.Context, req *userpb.GetEmployeeByIdRequest) (*userpb.GetEmployeeResponse, error) {
+func (s *Server) GetEmployeeById(_ context.Context, req *userpb.GetUserByIdRequest) (*userpb.GetEmployeeResponse, error) {
 	resp, err := getUserByAttribute(Employee{}, s.db_gorm, "id", req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return resp.toProtobuf(), nil
+}
+
+func (s *Server) GetClientByEmail(_ context.Context, req *userpb.GetUserByEmailRequest) (*userpb.GetClientResponse, error) {
+	resp, err := getUserByAttribute(Client{}, s.db_gorm, "email", req.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "employee not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to get employee")
+	}
+	return resp.toProtobuf(), nil
+}
+
+func (s *Server) GetClientById(_ context.Context, req *userpb.GetUserByIdRequest) (*userpb.GetClientResponse, error) {
+	resp, err := getUserByAttribute(Client{}, s.db_gorm, "id", req.Id)
 	if err != nil {
 		return nil, err
 	}

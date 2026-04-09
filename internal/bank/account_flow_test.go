@@ -22,7 +22,17 @@ func (timeArgument) Match(v driver.Value) bool {
 }
 
 func TestCreateAccountSuccess(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	notificationServer := &testNotificationServer{}
+	notifAddr, notifStop := startNotificationTestServer(t, notificationServer)
+	defer notifStop()
+	t.Setenv("NOTIFICATION_GRPC_ADDR", notifAddr)
+
+	userServer := &testUserServer{}
+	userAddr, userStop := startUserTestServer(t, userServer)
+	defer userStop()
+	t.Setenv("USER_GRPC_ADDR", userAddr)
+
+	server, mock, db := newGormTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	createdAt := time.Date(2026, 3, 19, 0, 0, 0, 0, time.UTC)
@@ -273,7 +283,17 @@ func TestCreateAccountCurrencyNotFound(t *testing.T) {
 }
 
 func TestCreateAccountDefaultValidUntilAndZeroLimitsBecomeNull(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	notificationServer := &testNotificationServer{}
+	notifAddr, notifStop := startNotificationTestServer(t, notificationServer)
+	defer notifStop()
+	t.Setenv("NOTIFICATION_GRPC_ADDR", notifAddr)
+
+	userServer := &testUserServer{}
+	userAddr, userStop := startUserTestServer(t, userServer)
+	defer userStop()
+	t.Setenv("USER_GRPC_ADDR", userAddr)
+
+	server, mock, db := newGormTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	createdAt := time.Date(2026, 3, 19, 0, 0, 0, 0, time.UTC)
@@ -353,7 +373,17 @@ func TestCreateAccountDefaultValidUntilAndZeroLimitsBecomeNull(t *testing.T) {
 }
 
 func TestCreateAccountNumberCollisionRetryPath(t *testing.T) {
-	server, mock, db := newTestServer(t)
+	notificationServer := &testNotificationServer{}
+	notifAddr, notifStop := startNotificationTestServer(t, notificationServer)
+	defer notifStop()
+	t.Setenv("NOTIFICATION_GRPC_ADDR", notifAddr)
+
+	userServer := &testUserServer{}
+	userAddr, userStop := startUserTestServer(t, userServer)
+	defer userStop()
+	t.Setenv("USER_GRPC_ADDR", userAddr)
+
+	server, mock, db := newGormTestServer(t)
 	defer func() { _ = db.Close() }()
 
 	createdAt := time.Date(2026, 3, 19, 0, 0, 0, 0, time.UTC)
